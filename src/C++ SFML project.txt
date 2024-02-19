@@ -1,0 +1,10 @@
+The Last Dreamer
+You are playing as character from happy kingdom, however everybodys dreams start to become plagued, so you set out,
+to fight the "King of night" to return everyones dreams back to normal.
+||| Phase One
+Main gameplay is happening like legend of zelda (You have a map divided into rooms or choose to follow your character)
+All the assets needed are no soundtracks, some sounds, textures: Floor (no/flowers), Hero, Hero's rake (3 claws - weapon), 2 Enemies, bush, tree, water
+||| Phase two
+Create Dialogue scene - 3 pictures, Some text, Expand the story
+||| Phase three
+Create Night scene - 2D platformer, activated by collision with "Night leak", collect stardust to escape end unlock smth in real world, after collecting one stardust change the environment from stars and peaceful to blood and unsetteling also activate all dangerous things like spikes
