@@ -45,3 +45,7 @@ const std::vector<Entity>& EntityManager::getEntities() {
 const std::vector<Entity>& EntityManager::getEntities(const enum EntityTag tag) {
   return entityMap[tag];
 }
+
+inline Entity EntityManager::player() {
+  return getEntities(EPLAYER)[0];
+}

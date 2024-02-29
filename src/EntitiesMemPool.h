@@ -12,8 +12,8 @@ enum EntityTag {
   EPLAYER,
   //Tag for all enemies
   EENEMY,
-  //Tag for bullets
-  EBULLET,
+  //Tag for sword
+  ESWORD,
   //Tag for tiles
   ETILE,
   //Tag for decorations

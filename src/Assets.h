@@ -6,18 +6,32 @@
 
 //Enum of all textures (prefix TEX) (they correspond to animations)
 enum textureName {
-  
+  TEXENEMYBASIC,
+  TEXENEMYDESTROY,
+  TEXENEMYWITHARMOR,
+  TEXFLOOR,
+  TEXFLOORFLOWERS,
+  TEXHEROBACK,
+  TEXHEROBACKRUN,
+  TEXHEROFACE,
+  TEXHEROFACERUN,
+  TEXHEROSIDE,
+  TEXHEROSIDERUN,
+  TEXSWORD,
+  TEXWATER,
+  TEXBORDER
 };
 
 //Enum of all sounds (prefix SOUND)
 enum soundName {
-  
+  SOUNDGOTHIT,
+  SOUNDHEARTBEAT
 };
 
 //Enum of all fonts (prefix FONT)
 enum fontName {
-  FONTBAUHS93,
-  FONTCONSOLA
+  FONTANTONREG,
+  FONTINCONSOLATAREG
 };
 
 // Enum of all music (prefix MUSIC)

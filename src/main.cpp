@@ -1,13 +1,8 @@
-//#include "GameEngine.h"
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-#include <SFML/System.hpp>
-#include <iostream>
+#include "GameEngine.h"
 
 
 int main(int argc, char** argv) {
-  std::cout << sizeof(sf::Sprite);
-  /*GameEngine g;
-  g.run();*/
+  GameEngine g;
+  g.run();
   return 0;
 }

@@ -1,0 +1,32 @@
+T assets/textures/EnemyBasic.png
+T assets/textures/EnemyDestroy.png
+T assets/textures/EnemyWithArmor.png
+T assets/textures/Floor.png
+T assets/textures/FloorFlowers.png
+T assets/textures/HeroBack.png
+T assets/textures/HeroBackRun.png
+T assets/textures/HeroFace.png
+T assets/textures/HeroFaceRun.png
+T assets/textures/HeroSide.png
+T assets/textures/HeroSideRun.png
+T assets/textures/Sword.png
+T assets/textures/Water.png
+T assets/textures/Border.png
+A 0 2 30
+A 1 18 2
+A 2 1 0
+A 3 1 0
+A 4 1 0
+A 5 1 0
+A 6 4 10
+A 7 1 0
+A 8 4 10
+A 9 1 0
+A 10 4 10
+A 11 1 0
+A 12 1 0
+A 13 1 0
+S assets/sounds/GotHit.ogg
+S assets/sounds/Heartbeat.ogg
+F assets/fonts/Anton-Regular.ttf
+F assets/fonts/Inconsolata-Regular.ttf
