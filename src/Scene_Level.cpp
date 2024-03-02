@@ -8,9 +8,10 @@ Scene_Level::Scene_Level(GameEnginePointer* aGame, const std::string aLevelPath)
 }
 // Register actions and call loadLevel()
 void Scene_Level::init() {
-  registerAction(sf::Keyboard::W, ACTJUMP);
+  registerAction(sf::Keyboard::W, ACTUP);
   registerAction(sf::Keyboard::A, ACTLEFT);
   registerAction(sf::Keyboard::D, ACTRIGHT);
+  registerAction(sf::Keyboard::S, ACTDOWN);
   registerAction(sf::Keyboard::Space, ACTATTACK);
   registerAction(sf::Keyboard::P, ACTPAUSE);
   registerAction(sf::Keyboard::Escape, ACTQUIT);
@@ -32,16 +33,20 @@ void Scene_Level::loadLevel() {
   float speed;
   while (levelFile >> id) {
     switch (id) {
-    // Textures
+      // Textures
     case 'T':
+    {
       Entity e = entities.addEntity(ETILE);
       levelFile >> aName >> rX >> rY >> x >> y >> mb >> vb;
       e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), mb, vb);
       e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
+      std::cout << "Added new tile " << e.getComponent<CAnimation>().animation.getName() << "|" << e.getComponent<CAABB>().size.x << " POS: " << e.getComponent<CTransform>().pos.x << " " << e.getComponent<CTransform>().pos.y << "\n";
       break;
-    // Player
+    }
+      // Player
     case 'P':
+    {
       Entity e = entities.addEntity(EPLAYER);
       levelFile >> playerConfig.rX >> playerConfig.rY >> playerConfig.X >> playerConfig.Y
         >> playerConfig.BBWidth >> playerConfig.BBHeight >> playerConfig.speed >> playerConfig.Health;
@@ -54,8 +59,10 @@ void Scene_Level::loadLevel() {
       view.setCenter(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       game->getWindow().setView(view);
       break;
-    // Enemy
+    }
+      // Enemy
     case 'E':
+    {
       Entity e = entities.addEntity(EENEMY);
       int HP, Dmg;
       float speed;
@@ -72,10 +79,12 @@ void Scene_Level::loadLevel() {
           levelFile >> PX >> PY;
           pai.patrolPositions.push_back(getPosition(rX, rY, PX, PY, e));
         }
-      } else {
+      }
+      else {
         e.addComponent<CFollowAI>(e.getComponent<CTransform>().pos, speed);
       }
       break;
+    }
     }
   }
 }
@@ -85,16 +94,49 @@ Vec2 Scene_Level::getPosition(int aRoomX, int aRoomY, int aEntityX, int aEntityY
   return Vec2(aRoomX * WINDOW_WIDTH + aEntityX * 64 + e.getComponent<CAABB>().halfSize.x, aRoomY * WINDOW_HEIGHT + aEntityY * 64 + e.getComponent<CAABB>().halfSize.x);
 }
 
+
+char animationNameToDir(animationName n, float scalex) {
+  if (n == ANIMHEROBACK || n == ANIMHEROBACKRUN) {
+    return 'w';
+  } else if (n == ANIMHEROFACE || n == ANIMHEROFACERUN) {
+    return 'w';
+  } else if (n == ANIMHEROSIDE || n == ANIMHEROSIDERUN) {
+    return (scalex < 0) ? 'a' : 'd';
+  }
+}
+
+
 void Scene_Level::spawnSword(Entity e) {
   Entity sword = entities.addEntity(ESWORD);
 
+  char playerDir = animationNameToDir(e.getComponent<CAnimation>().animation.getName(), e.getComponent<CAnimation>().animation.getSprite().getScale().x);
+
   sword.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMSWORD));
   sword.addComponent<CAABB>(sword.getComponent<CAnimation>().animation.getSize());
-  sword.addComponent<CTransform>(/*Based on player scale add pos here */);
+  Vec2 posShift;
+  float rot = 0;
+  switch (playerDir) {
+    case 'w':
+      posShift = Vec2(-64, 0);
+      rot = 180;
+      break;
+    case 's':
+      posShift = Vec2(64, 0);
+      break;
+    case 'a':
+      posShift = Vec2(0, -64);
+      rot = 90;
+      break;
+    case 'd':
+      posShift = Vec2(0, 64);
+      rot = 270;
+      break;
+  }
+  sword.addComponent<CTransform>(e.getComponent<CTransform>().pos + posShift, Vec2(0, 0), 0);
   sword.addComponent<CLifespan>(40); // Maybe remove
   sword.addComponent<CDamage>(1);
 
-  sword.getComponent<CAnimation>().animation.getSprite().setScale(1, 1);//Set correct scale from player
+  sword.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
 }
 
 void Scene_Level::sAnimation() {
@@ -120,15 +162,47 @@ void Scene_Level::sAnimation() {
 }
 
 
+char velocityToDir(Vec2& vel) {
+  if (vel.x > 0) {
+    return 'd';
+  } else if (vel.x < 0) {
+    return 'a';
+  } else if (vel.y < 0) {
+    return 'w';
+  }
+  return 's';
+}
+
+
 void Scene_Level::sMovement() {
   // Update positions of enemies
   for (auto e : entities.getEntities(EENEMY)) {
     auto& transform = e.getComponent<CTransform>();
     if (e.hasComponent<CFollowAI>()) {
-      /*FOLLOW AI mechanic*/
+      Vec2 path(1, 1);
+      //FOLLOW AI mechanic
+      for (auto et : entities.getEntities(ETILE)) {
+        if (et.getComponent<CAABB>().blockVision) {
+          if (entityIntersect(transform.pos, entities.player().getComponent<CTransform>().pos, et)) {
+            path = Vec2(0, 0);
+          }
+        }
+      }
+      if (path == Vec2(1, 1)) {
+        path = entities.player().getComponent<CTransform>().pos - transform.pos;
+        path.normalize();
+        path *= e.getComponent<CFollowAI>().speed;
+        transform.velocity = path;
+      }
     } else {
-      /*PATROL AI mechanic (just make vector to next PPoint and normalize it to speed)*/
+      //PATROL AI mechanic (just make vector to next PPoint and normalize it to speed)
+      Vec2 direction = e.getComponent<CPatrolAI>().nextPosition() - transform.pos;
+      direction.normalize();
+      direction *= e.getComponent<CPatrolAI>().speed;
+      transform.velocity = direction;
     }
+    transform.previousPos = transform.pos;
+    transform.pos += transform.velocity;
   }
 
   auto& playerTransform = entities.player().getComponent<CTransform>();
@@ -138,33 +212,84 @@ void Scene_Level::sMovement() {
   
   if (playerTransform.velocity == Vec2(0, 0)) {
     if (playerInput.left != playerInput.right) {
+      playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
       if (playerInput.left) {
         playerTransform.velocity.x -= playerConfig.speed;
-        if (playerAnimation.animation.getName() != ANIMHEROSIDERUN) {
-          playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);/*Finish movement system*/
-        }
         playerAnimation.animation.getSprite().setScale(-1, 1);
-      }
-      if (playerInput.right) {
+      } else {
         playerTransform.velocity.x += playerConfig.speed;
-        if (playerAnimation.animation.getName() != ANIMHEROSIDERUN) {
-          playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
-        }
         playerAnimation.animation.getSprite().setScale(1, 1);
       }
-
     }
-    else if (!playerInput.right) {
-
+    else {
+      if (playerInput.up != playerInput.down) {
+        if (playerInput.up) {
+          playerTransform.velocity.y -= playerConfig.speed;
+          playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROBACKRUN);
+        }
+        else {
+          playerTransform.velocity.y += playerConfig.speed;
+          playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROFACERUN);
+        }
+      }
+    }
+  } else {
+    switch (velocityToDir(playerTransform.velocity)) {
+      case 'w':
+        if (!playerInput.up) {
+          playerTransform.velocity = Vec2(0, 0);
+        }
+        break;
+      case 's':
+        if (!playerInput.down) {
+          playerTransform.velocity = Vec2(0, 0);
+        }
+        break;
+      case 'a':
+        if (!playerInput.left) {
+          playerTransform.velocity = Vec2(0, 0);
+        }
+        break;
+      case 'd':
+        if (!playerInput.right) {
+          playerTransform.velocity = Vec2(0, 0);
+        }
+        break;
     }
   }
   
   // Finally update position
   playerTransform.pos += playerTransform.velocity;
 
-  // After updating position update sword pos
+  // After updating position update sword pos and rotation
   if (playerInput.attack) {
+    for (auto e : entities.getEntities(ESWORD)) {
+      char playerDir = animationNameToDir(playerAnimation.animation.getName(), playerAnimation.animation.getSprite().getScale().x);
+      Vec2 posShift;
+      float rot = 0;
+      switch (playerDir) {
+        case 'w':
+          posShift = Vec2(-64, 0);
+          rot = 180;
+          break;
+        case 's':
+          posShift = Vec2(64, 0);
+          break;
+        case 'a':
+          posShift = Vec2(0, -64);
+          rot = 90;
+          break;
+        case 'd':
+          posShift = Vec2(0, 64);
+          rot = 270;
+          break;
+      }
 
+      auto& eTransform = e.getComponent<CTransform>();
+      eTransform.previousPos = eTransform.pos;
+      eTransform.pos = playerTransform.pos + posShift;
+      e.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
+    }
   }
 }
 
@@ -179,7 +304,7 @@ void Scene_Level::sLifespan() {
   }
 }
 
-void Scene_Level::sCollision() {
+void Scene_Level::sCollision() {/*
   bool wasDead = false;
   auto overlap = getOverlap(player, player);
 
@@ -268,7 +393,7 @@ void Scene_Level::sCollision() {
   }
   if (wasDead) {
     loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
-  }
+  }*/
 }
 
 void Scene_Level::sSetView() {
@@ -315,25 +440,23 @@ void Scene_Level::sRender() {
 void Scene_Level::sDoAction(const Action& action) {
   if (action.getActionType() == ACTSTART) {
     switch (action.getActionName()) {
-    case ACTJUMP:
-      if (!player->getComponent<CInput>().airborne) {
-        player->getComponent<CInput>().jump = true;
-      }
+    case ACTUP:
+      entities.player().getComponent<CInput>().up = true;
       break;
     case ACTLEFT:
-      player->getComponent<CInput>().left = true;
+      entities.player().getComponent<CInput>().left = true;
       break;
     case ACTRIGHT:
-      player->getComponent<CInput>().right = true;
+      entities.player().getComponent<CInput>().right = true;
       break;
-    case ACTSHOOT:
-      if (!player->getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 60) {
-        player->getComponent<CInput>().attack = true;
+    case ACTDOWN:
+      entities.player().getComponent<CInput>().down = true;
+      break;
+    case ACTATTACK:
+      if (!entities.player().getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 40) {
+        entities.player().getComponent<CInput>().attack = true;
         lastAttackFrame = currentFrame;
-        spawnBullet(player);
-        auto prevAnimationScale = player->getComponent<CAnimation>().animation.getSprite().getScale();
-        player->getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMMCSHOOT);
-        player->getComponent<CAnimation>().animation.getSprite().setScale(prevAnimationScale);
+        spawnSword(entities.player());
       }
       break;
 
@@ -348,15 +471,35 @@ void Scene_Level::sDoAction(const Action& action) {
       break;
     }
   } else {
+    auto& anim = entities.player().getComponent<CAnimation>();
     switch (action.getActionName()) {
-    case ACTJUMP:
-      player->getComponent<CInput>().jump = false;
+    case ACTUP:
+      entities.player().getComponent<CInput>().up = false;
+      if (anim.animation.getName() == ANIMHEROBACKRUN) {
+        anim.animation = game->getAssets().getAnimation(ANIMHEROBACK);
+      }
       break;
     case ACTLEFT:
-      player->getComponent<CInput>().left = false; /*make animation change to standing here*/
+      entities.player().getComponent<CInput>().left = false;
+      if (anim.animation.getName() == ANIMHEROSIDERUN) {
+        auto scale = anim.animation.getSprite().getScale();
+        anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+        anim.animation.getSprite().setScale(scale);
+      }
       break;
     case ACTRIGHT:
-      player->getComponent<CInput>().right = false;
+      entities.player().getComponent<CInput>().right = false;
+      if (anim.animation.getName() == ANIMHEROSIDERUN) {
+        auto scale = anim.animation.getSprite().getScale();
+        anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+        anim.animation.getSprite().setScale(scale);
+      }
+      break;
+    case ACTDOWN:
+      entities.player().getComponent<CInput>().right = false;
+      if (anim.animation.getName() == ANIMHEROFACERUN) {
+        anim.animation = game->getAssets().getAnimation(ANIMHEROFACE);
+      }
       break;
     }
   }

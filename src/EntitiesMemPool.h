@@ -1,6 +1,7 @@
 #pragma once
 #include <tuple>
 #include "Components.h"
+#include <iostream>
 
 #define MAX_ENTITIES 10000
 
@@ -15,9 +16,7 @@ enum EntityTag {
   //Tag for sword
   ESWORD,
   //Tag for tiles
-  ETILE,
-  //Tag for decorations
-  EDECORATION
+  ETILE
 };
 
 typedef std::tuple<

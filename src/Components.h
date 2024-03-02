@@ -2,6 +2,7 @@
 #include "Vec2.h"
 #include "Animation.h"
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 
 //base component class
@@ -44,7 +45,7 @@ public:
   CAABB(const Vec2& aSize)
     : size(aSize)
     , halfSize(aSize / 2) {}
-  CAABB(const Vec2& aSize, bool aBVis, bool aBMov)
+  CAABB(const Vec2& aSize, bool aBMov, bool aBVis)
     : size(aSize)
     , halfSize(aSize/2)
     , blockVision(aBVis)
@@ -68,7 +69,7 @@ class CLifespan : public Component {
 public:
   uint32_t maxLifespan;
   uint32_t lifespan;
-  CLifespan(size_t aInitialLifespan)
+  CLifespan(uint32_t aInitialLifespan)
     : maxLifespan(aInitialLifespan)
     , lifespan(aInitialLifespan) {}
   CLifespan() {}
@@ -83,9 +84,9 @@ public:
 
 class CDamage : public Component {
 public:
-  uint8_t damage = 1;
+  uint16_t damage = 1;
   CDamage() {}
-  CDamage(uint8_t aDamage)
+  CDamage(uint16_t aDamage)
     : damage(aDamage) {}
 };
 
@@ -99,10 +100,13 @@ public:
 
 class CHP : public Component {
 public:
-  uint8_t maxHp = 1;
-  int8_t currentHp = 1;
+  uint16_t maxHp = 1;
+  int16_t currentHp = 1;
   CHP() {}
-  CHP(uint8_t aMax, int16_t aCur)
+  CHP(uint16_t aMax)
+    : maxHp(aMax)
+    , currentHp(aMax) {}
+  CHP(uint16_t aMax, int16_t aCur)
     : maxHp(aMax)
     , currentHp(aCur) {}
 };
@@ -120,10 +124,16 @@ public:
 class CPatrolAI : public Component {
 public:
   std::vector<Vec2> patrolPositions;
-  uint8_t currentPosition = 0;
+  uint16_t currentPosition = 0;
   float speed = 0.0f;
   CPatrolAI() {}
-  CPatrolAI(std::vector<Vec2>& aPosVec, float aSpeed)
-    : patrolPositions(aPosVec)
-    , speed(aSpeed) {}
+  CPatrolAI(float aSpeed)
+    : speed(aSpeed) {}
+  Vec2& nextPosition() {
+    return patrolPositions[currentPosition];
+  }
+  void incrementPosition() {
+    currentPosition++;
+    currentPosition %= patrolPositions.size();
+  }
 };

@@ -1,5 +1,6 @@
 #include "EntitiesMemPool.h"
 
+
 EntitiesMemPool::EntitiesMemPool(size_t maxEntities) {
   std::get<std::vector<CTransform>>(componentspool).reserve(MAX_ENTITIES);
   std::get<std::vector<CAABB>>(componentspool).reserve(MAX_ENTITIES);
@@ -55,6 +56,7 @@ size_t EntitiesMemPool::addEntity(EntityTag tag) {
   std::get<std::vector<CPatrolAI>>(componentspool).push_back(CPatrolAI());
   tags.push_back(tag);
   isAlive.push_back(true);
+  std::cout << "Didnt fit addr: " << isAlive.size() - 1 << "\n";
   return isAlive.size() - 1;
 }
 

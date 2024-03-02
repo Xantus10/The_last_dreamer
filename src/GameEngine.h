@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Scene_Menu.h"
+#include "Scene_Level.h"
 
 #include "GameEnginePointer.h"
 class GameEngine : public GameEnginePointer {

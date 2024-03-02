@@ -17,7 +17,7 @@ enum animationName {
   ANIMHEROSIDERUN,
   ANIMSWORD,
   ANIMWATER,
-  TEXBORDER
+  ANIMBORDER
 };
 
 //Animation functionality

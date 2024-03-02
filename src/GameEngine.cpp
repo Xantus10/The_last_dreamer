@@ -14,7 +14,7 @@ GameEngine::GameEngine() {
 
 void GameEngine::initAssets() {
   assets = Assets();
-  std::ifstream assetsfile("./assets/assetslist.txt");
+  std::ifstream assetsfile("./assets/assets.txt");
   char assetIndicator = ' ';
   std::string assetfilename = "";
   int textureIndex = 0;
@@ -77,7 +77,7 @@ void GameEngine::run() {
       } else {
         bool endCur = (scenesMap[currentScene]->getId() != 'M');
         if (scenesMap[currentScene]->nextLevel.levelType == 'L') {
-         // changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Level>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+         changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Level>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
         }
         else if (scenesMap[currentScene]->nextLevel.levelType == 'I') {
          // changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Image>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);

@@ -25,6 +25,7 @@ void EntityManager::update() {
   }
 
   for (auto entityToAdd : toAdd) {
+    std::cout << "To add: " << entityToAdd.id() << " addr: " << entityToAdd.memPoolAddress << " size: " << entities.size() << "\n";
     entities.push_back(entityToAdd);
     entityMap[entityToAdd.tag()].push_back(entityToAdd);
   }
@@ -33,8 +34,8 @@ void EntityManager::update() {
 
 Entity EntityManager::addEntity(const enum EntityTag tag) {
   Entity e(entitiesCreated++);
-  toAdd.push_back(e);
   e.setMemPoolAddress(EntitiesMemPool::Instance().addEntity(tag));
+  toAdd.push_back(e);
   return e;
 }
 
@@ -46,6 +47,6 @@ const std::vector<Entity>& EntityManager::getEntities(const enum EntityTag tag) 
   return entityMap[tag];
 }
 
-inline Entity EntityManager::player() {
+Entity EntityManager::player() {
   return getEntities(EPLAYER)[0];
 }

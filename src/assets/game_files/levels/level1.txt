@@ -1,0 +1,8 @@
+Menu ./assets/game_files/levels/menu.txt M
+T 3 0 0 0 0 0 0
+T 4 0 0 0 1 0 0
+T 3 0 0 0 2 0 0
+T 3 0 0 1 0 0 0
+T 3 0 0 1 1 0 0
+T 4 0 0 1 2 0 0
+P 0 0 1 1 64 64 1 3

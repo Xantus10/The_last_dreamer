@@ -23,7 +23,7 @@ public:
   // Add a component addComponent<ComponentClass>(Args for ComponentClass constructor)
   template <typename T, typename... TArgs>
   T& addComponent(TArgs&&... args) {
-    return EntitiesMemPool::Instance().addComponent<T>(memPoolAddress);
+    return EntitiesMemPool::Instance().addComponent<T>(memPoolAddress, std::forward<TArgs>(args)...);
   }
 
   // Returns true if entity has certain component
