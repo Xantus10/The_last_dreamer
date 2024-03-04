@@ -3,7 +3,7 @@
 #include <iostream>
 
 GameEngine::GameEngine() {
-  window.create(sf::VideoMode(1920, 1080), "Game", sf::Style::Fullscreen);
+  window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Game"/*, sf::Style::Fullscreen */ );
   window.setFramerateLimit(60);
   std::cout << "Begin asset loading...\n";
   initAssets();

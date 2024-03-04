@@ -9,7 +9,7 @@ void Scene_Menu::init() {
   menuStrings.push_back("NEW GAME");
   menuStrings.push_back("CONTINUE");
   menuStrings.push_back("QUIT");
-  sf::Font& font = game->getAssets().getFont(FONTINCONSOLATAREG);
+  sf::Font& font = game->getAssets().getFont(FONTANTONREG);
   for (int i = 0; i < menuStrings.size(); i++) {
     sf::Text t = sf::Text(menuStrings[i], font, 40);
     t.setFillColor(sf::Color(30, 30, 30));

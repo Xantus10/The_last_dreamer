@@ -15,6 +15,7 @@ void Scene_Level::init() {
   registerAction(sf::Keyboard::Space, ACTATTACK);
   registerAction(sf::Keyboard::P, ACTPAUSE);
   registerAction(sf::Keyboard::Escape, ACTQUIT);
+  registerAction(sf::Keyboard::T, ACTSELECT);
   loadLevel();
 }
 
@@ -41,7 +42,7 @@ void Scene_Level::loadLevel() {
       e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), mb, vb);
       e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
-      std::cout << "Added new tile " << e.getComponent<CAnimation>().animation.getName() << "|" << e.getComponent<CAABB>().size.x << " POS: " << e.getComponent<CTransform>().pos.x << " " << e.getComponent<CTransform>().pos.y << "\n";
+      //std::cout << "Added new tile " << e.getComponent<CAnimation>().animation.getName() << "|" << e.getComponent<CAABB>().size.x << " POS: " << e.getComponent<CTransform>().pos.x << " " << e.getComponent<CTransform>().pos.y << "\n";
       break;
     }
       // Player
@@ -70,6 +71,8 @@ void Scene_Level::loadLevel() {
       e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize());
       e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
+      e.addComponent<CHP>(HP);
+      e.addComponent<CDamage>(Dmg);
       if (mb) {
         CPatrolAI& pai = e.addComponent<CPatrolAI>(speed);
         int NOfPosts;
@@ -87,6 +90,7 @@ void Scene_Level::loadLevel() {
     }
     }
   }
+  entities.update();
 }
 
 Vec2 Scene_Level::getPosition(int aRoomX, int aRoomY, int aEntityX, int aEntityY, Entity e) const {
@@ -94,12 +98,11 @@ Vec2 Scene_Level::getPosition(int aRoomX, int aRoomY, int aEntityX, int aEntityY
   return Vec2(aRoomX * WINDOW_WIDTH + aEntityX * 64 + e.getComponent<CAABB>().halfSize.x, aRoomY * WINDOW_HEIGHT + aEntityY * 64 + e.getComponent<CAABB>().halfSize.x);
 }
 
-
 char animationNameToDir(animationName n, float scalex) {
   if (n == ANIMHEROBACK || n == ANIMHEROBACKRUN) {
     return 'w';
   } else if (n == ANIMHEROFACE || n == ANIMHEROFACERUN) {
-    return 'w';
+    return 's';
   } else if (n == ANIMHEROSIDE || n == ANIMHEROSIDERUN) {
     return (scalex < 0) ? 'a' : 'd';
   }
@@ -117,23 +120,23 @@ void Scene_Level::spawnSword(Entity e) {
   float rot = 0;
   switch (playerDir) {
     case 'w':
-      posShift = Vec2(-64, 0);
-      rot = 180;
+      posShift = Vec2(0, -54);
       break;
     case 's':
-      posShift = Vec2(64, 0);
+      posShift = Vec2(0, 64);
+      rot = 180;
       break;
     case 'a':
-      posShift = Vec2(0, -64);
-      rot = 90;
+      posShift = Vec2(-44, 0);
+      rot = 270;
       break;
     case 'd':
-      posShift = Vec2(0, 64);
-      rot = 270;
+      posShift = Vec2(44, 0);
+      rot = 90;
       break;
   }
   sword.addComponent<CTransform>(e.getComponent<CTransform>().pos + posShift, Vec2(0, 0), 0);
-  sword.addComponent<CLifespan>(40); // Maybe remove
+  sword.addComponent<CLifespan>(20); // Maybe remove
   sword.addComponent<CDamage>(1);
 
   sword.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
@@ -262,41 +265,39 @@ void Scene_Level::sMovement() {
   playerTransform.pos += playerTransform.velocity;
 
   // After updating position update sword pos and rotation
-  if (playerInput.attack) {
-    for (auto e : entities.getEntities(ESWORD)) {
-      char playerDir = animationNameToDir(playerAnimation.animation.getName(), playerAnimation.animation.getSprite().getScale().x);
-      Vec2 posShift;
-      float rot = 0;
-      switch (playerDir) {
-        case 'w':
-          posShift = Vec2(-64, 0);
-          rot = 180;
-          break;
-        case 's':
-          posShift = Vec2(64, 0);
-          break;
-        case 'a':
-          posShift = Vec2(0, -64);
-          rot = 90;
-          break;
-        case 'd':
-          posShift = Vec2(0, 64);
-          rot = 270;
-          break;
-      }
-
-      auto& eTransform = e.getComponent<CTransform>();
-      eTransform.previousPos = eTransform.pos;
-      eTransform.pos = playerTransform.pos + posShift;
-      e.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
+  for (auto e : entities.getEntities(ESWORD)) {
+    char playerDir = animationNameToDir(playerAnimation.animation.getName(), playerAnimation.animation.getSprite().getScale().x);
+    Vec2 posShift;
+    float rot = 0;
+    switch (playerDir) {
+      case 'w':
+        posShift = Vec2(0, -54);
+        break;
+      case 's':
+        posShift = Vec2(0, 64);
+        rot = 180;
+        break;
+      case 'a':
+        posShift = Vec2(-44, 0);
+        rot = 270;
+        break;
+      case 'd':
+        posShift = Vec2(44, 0);
+        rot = 90;
+        break;
     }
+
+    auto& eTransform = e.getComponent<CTransform>();
+    eTransform.previousPos = eTransform.pos;
+    eTransform.pos = playerTransform.pos + posShift;
+    e.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
   }
 }
 
 void Scene_Level::sLifespan() {
   for (auto e : entities.getEntities(ESWORD)) {
     auto& lifespanComponent = e.getComponent<CLifespan>();
-    if (lifespanComponent.lifespan < 0) {
+    if (lifespanComponent.lifespan == 0) {
       e.destroy();
     } else {
       lifespanComponent.lifespan--;
@@ -304,52 +305,74 @@ void Scene_Level::sLifespan() {
   }
 }
 
-void Scene_Level::sCollision() {/*
-  bool wasDead = false;
-  auto overlap = getOverlap(player, player);
+void Scene_Level::sInvincibility() {
+  for (auto e : entities.getEntities()) {
+    if (e.hasComponent<CInvincibility>()) {
+      e.getComponent<CInvincibility>().iframes--;
+      if (e.getComponent<CInvincibility>().iframes == 0) {
+        e.removeComponent<CInvincibility>();
+      }
+    }
+  }
+}
+
+void Scene_Level::sCollision() {
+  Vec2 overlap;
 
   for (auto e : entities.getEntities(EENEMY)) {
-    // Enemy + bullet
-    for (auto b : entities.getEntities(EBULLET)) {
-      overlap = getOverlap(e, b);
+    // Enemy + sword
+    for (auto s : entities.getEntities(ESWORD)) {
+      overlap = getOverlap(e, s);
       if (overlap.x > 0 && overlap.y > 0) {
-        e->getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMENEMYMUSHROOMKILL);
-        e->getComponent<CTransform>().velocity = Vec2(0, 0);
-        e->removeComponent<CAABB>();
-        b->destroy();
+        if (!e.hasComponent<CInvincibility>()) {
+          e.getComponent<CHP>().currentHp -= s.getComponent<CDamage>().damage;
+          if (e.getComponent<CHP>().currentHp == 0) {
+            e.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMENEMYDESTROY);
+            e.removeComponent<CAABB>();
+            if (e.hasComponent<CFollowAI>()) { e.getComponent<CFollowAI>().speed = 0; }
+            else { e.getComponent<CPatrolAI>().speed = 0; }
+          } else {
+            e.addComponent<CInvincibility>(22);
+          }
+        }
       }
     }
     // Enemy + tile
     for (auto t : entities.getEntities(ETILE)) {
-      overlap = getOverlap(e, t);
-      if (overlap.x > 0 && overlap.y > 0) {
-        // We are colliding from right
-        if (e->getComponent<CTransform>().previousPos.x > t->getComponent<CTransform>().pos.x) {
-          e->getComponent<CTransform>().pos.x += overlap.x;
-          e->getComponent<CAnimation>().animation.getSprite().setScale(1, 1);
-        } else { // We are colliding from left
-          e->getComponent<CTransform>().pos.x -= overlap.x;
-          e->getComponent<CAnimation>().animation.getSprite().setScale(-1, 1);
+      if (t.getComponent<CAABB>().blockMovement) {
+        overlap = getOverlap(e, t);
+        Vec2 prevOverlap = getPreviousOverlap(e, t);
+        if (overlap.x > 0 && overlap.y > 0) {
+          // Up/Down
+          if (prevOverlap.x > 0) {
+            // From Top
+            if (e.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
+              e.getComponent<CTransform>().pos.y -= overlap.y;
+            }
+            else { // From bottom
+              e.getComponent<CTransform>().pos.y += overlap.y;
+            } // From left/right
+          }
+          else {
+            // From left
+            if (e.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
+              e.getComponent<CTransform>().pos.x -= overlap.x;
+            }
+            else { // From right
+              e.getComponent<CTransform>().pos.x += overlap.x;
+            }
+          }
         }
-        e->getComponent<CTransform>().velocity.invertX();
       }
     }
     // Player + enemy
-    overlap = getOverlap(e, player);
+    overlap = getOverlap(e, entities.player());
+    // 2 bcs we give some breathing room for hero
     if (overlap.x > 2 && overlap.y > 2) {
-      wasDead = true;
+      entities.player().getComponent<CHP>().currentHp -= e.getComponent<CDamage>().damage;
     }
   }
-  // Do boundaries stop at left and reload level on bottom
-  // Boundaries left
-  if (player->getComponent<CTransform>().pos.x < player->getComponent<CAnimation>().animation.getSize().x / 2) {
-    player->getComponent<CTransform>().pos.x = player->getComponent<CAnimation>().animation.getSize().x / 2;
-  }
-  // Boundaries bottom
-  if (player->getComponent<CTransform>().pos.y > game->getWindow().getSize().y - player->getComponent<CAnimation>().animation.getSize().y / 2) {
-    wasDead = true;
-  }
-
+  /*
   // Do player + ETILE
   for (auto t : entities.getEntities(ETILE)) {
     overlap = getOverlap(player, t);
@@ -380,34 +403,33 @@ void Scene_Level::sCollision() {/*
         }
       }
     }
-    // Tile + bullet
-    for (auto b : entities.getEntities(EBULLET)) {
-      overlap = getOverlap(t, b);
-      if (overlap.x > 0 && overlap.y > 0) {
-        b->destroy();
-        if (t->getComponent<CAnimation>().animation.getName() == ANIMWOODBLOCK) {
-          t->getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMWOODDESTROY);
-        }
-      }
-    }
-  }
-  if (wasDead) {
-    loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
   }*/
+  if (entities.player().getComponent<CHP>().currentHp == 0) {
+    loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
+  }
 }
 
 void Scene_Level::sSetView() {
   if (cameraIsFollowMode) {
     view.setCenter(entities.player().getComponent<CTransform>().pos.x, entities.player().getComponent<CTransform>().pos.y);
   } else {
-    view.setCenter((entities.player().getComponent<CTransform>().pos.x/WINDOW_WIDTH)*WINDOW_WIDTH + WINDOW_WIDTH/2,
-      (entities.player().getComponent<CTransform>().pos.y / WINDOW_HEIGHT)*WINDOW_HEIGHT + WINDOW_HEIGHT/2);
+    sf::Vector2f v = sf::Vector2f(((int)entities.player().getComponent<CTransform>().pos.x / (int)WINDOW_WIDTH) * WINDOW_WIDTH + WINDOW_WIDTH / 2,
+      ((int)entities.player().getComponent<CTransform>().pos.y / (int)WINDOW_HEIGHT)* WINDOW_HEIGHT + WINDOW_HEIGHT / 2);
+    if (entities.player().getComponent<CTransform>().pos.x < 0) {
+      v.x-=WINDOW_WIDTH;
+    }
+    if (entities.player().getComponent<CTransform>().pos.y < 0) {
+      v.y-=WINDOW_HEIGHT;
+    }
+    view.setCenter(v);
   }
   
   game->getWindow().setView(view);
 }
 
 void Scene_Level::sRender() {
+  sf::Font font = game->getAssets().getFont(FONTINCONSOLATAREG);
+  sf::Text hpText;
   auto& window = game->getWindow();
   window.clear();
   for (auto e : entities.getEntities(ETILE)) {
@@ -418,8 +440,13 @@ void Scene_Level::sRender() {
   }
   for (auto e : entities.getEntities(EENEMY)) {
     if (e.hasComponent<CAnimation>()) {
+      hpText = sf::Text(std::to_string(e.getComponent<CHP>().currentHp), font, 22);
+      hpText.setOrigin(hpText.getLocalBounds().width / 2.0f, hpText.getLocalBounds().height / 2.0f);
+      hpText.setFillColor(sf::Color(230, 0, 0));
+      hpText.setPosition(e.getComponent<CTransform>().pos.x - 2, e.getComponent<CTransform>().pos.y - 58);
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
+      window.draw(hpText);
     }
   }
   for (auto e : entities.getEntities(ESWORD)) {
@@ -430,8 +457,13 @@ void Scene_Level::sRender() {
   }
   for (auto e : entities.getEntities(EPLAYER)) {
     if (e.hasComponent<CAnimation>()) {
+      hpText = sf::Text(std::to_string(e.getComponent<CHP>().currentHp), font, 22);
+      hpText.setOrigin(hpText.getLocalBounds().width / 2.0f, hpText.getLocalBounds().height / 2.0f);
+      hpText.setFillColor(sf::Color(230, 0, 0));
+      hpText.setPosition(e.getComponent<CTransform>().pos.x-2, e.getComponent<CTransform>().pos.y-58);
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
+      window.draw(hpText);
     }
   }
   window.display();
@@ -453,7 +485,7 @@ void Scene_Level::sDoAction(const Action& action) {
       entities.player().getComponent<CInput>().down = true;
       break;
     case ACTATTACK:
-      if (!entities.player().getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 40) {
+      if (!entities.player().getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 20) {
         entities.player().getComponent<CInput>().attack = true;
         lastAttackFrame = currentFrame;
         spawnSword(entities.player());
@@ -469,6 +501,8 @@ void Scene_Level::sDoAction(const Action& action) {
     case ACTPAUSE:
       paused = !paused;
       break;
+    case ACTSELECT:
+      cameraIsFollowMode = !cameraIsFollowMode;
     }
   } else {
     auto& anim = entities.player().getComponent<CAnimation>();
@@ -483,20 +517,24 @@ void Scene_Level::sDoAction(const Action& action) {
       entities.player().getComponent<CInput>().left = false;
       if (anim.animation.getName() == ANIMHEROSIDERUN) {
         auto scale = anim.animation.getSprite().getScale();
-        anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
-        anim.animation.getSprite().setScale(scale);
+        if (scale.x == -1) {
+          anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+          anim.animation.getSprite().setScale(scale);
+        }
       }
       break;
     case ACTRIGHT:
       entities.player().getComponent<CInput>().right = false;
       if (anim.animation.getName() == ANIMHEROSIDERUN) {
         auto scale = anim.animation.getSprite().getScale();
-        anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
-        anim.animation.getSprite().setScale(scale);
+        if (scale.x == 1) {
+          anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+          anim.animation.getSprite().setScale(scale);
+        }
       }
       break;
     case ACTDOWN:
-      entities.player().getComponent<CInput>().right = false;
+      entities.player().getComponent<CInput>().down = false;
       if (anim.animation.getName() == ANIMHEROFACERUN) {
         anim.animation = game->getAssets().getAnimation(ANIMHEROFACE);
       }
@@ -515,6 +553,7 @@ void Scene_Level::update() {
     sSetView(); // After position has been resolved make the camera close in on player
     sAnimation(); // Then call animations (Because of player attack animation)
     sLifespan(); // Then update the lifespan of all entities (honestly doesnt matter where)
+    sInvincibility(); //// Then update the iframes of all entities (honestly doesnt matter where)
   }
   sRender(); // After everything render
   currentFrame++;

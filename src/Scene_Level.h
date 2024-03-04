@@ -21,6 +21,7 @@ class Scene_Level : public Scene {
   void sAnimation(); // Animation system
   void sRender(); // Rendering system
   void sLifespan(); // Lifespan system
+  void sInvincibility(); // Invincibility system
   void sSetView(); // System for setting the right view
   void sDoAction(const Action& action);
 public:

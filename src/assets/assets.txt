@@ -12,7 +12,7 @@ T assets/textures/HeroSideRun.png
 T assets/textures/Sword.png
 T assets/textures/Water.png
 T assets/textures/Border.png
-A 0 2 30
+A 0 2 18
 A 1 18 2
 A 2 1 0
 A 3 1 0

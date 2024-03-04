@@ -25,7 +25,6 @@ void EntityManager::update() {
   }
 
   for (auto entityToAdd : toAdd) {
-    std::cout << "To add: " << entityToAdd.id() << " addr: " << entityToAdd.memPoolAddress << " size: " << entities.size() << "\n";
     entities.push_back(entityToAdd);
     entityMap[entityToAdd.tag()].push_back(entityToAdd);
   }
