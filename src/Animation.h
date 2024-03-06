@@ -17,7 +17,10 @@ enum animationName {
   ANIMHEROSIDERUN,
   ANIMSWORD,
   ANIMWATER,
-  ANIMBORDER
+  ANIMBORDER,
+  ANIMBUSH,
+  ANIMGRASS,
+  ANIMTREE
 };
 
 //Animation functionality

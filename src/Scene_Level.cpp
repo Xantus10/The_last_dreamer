@@ -196,6 +196,13 @@ void Scene_Level::sMovement() {
         path.normalize();
         path *= e.getComponent<CFollowAI>().speed;
         transform.velocity = path;
+      } else if (!isInside(e.getComponent<CFollowAI>().defaultPosition, e)) {
+        path = e.getComponent<CFollowAI>().defaultPosition - transform.pos;
+        path.normalize();
+        path *= e.getComponent<CFollowAI>().speed;
+        transform.velocity = path;
+      } else {
+        transform.velocity = Vec2(0, 0);
       }
     } else {
       //PATROL AI mechanic (just make vector to next PPoint and normalize it to speed)
@@ -326,6 +333,7 @@ void Scene_Level::sCollision() {
       if (overlap.x > 0 && overlap.y > 0) {
         if (!e.hasComponent<CInvincibility>()) {
           e.getComponent<CHP>().currentHp -= s.getComponent<CDamage>().damage;
+          game->getAssets().getSound(SOUNDGOTHIT).play();
           if (e.getComponent<CHP>().currentHp == 0) {
             e.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMENEMYDESTROY);
             e.removeComponent<CAABB>();
@@ -369,41 +377,53 @@ void Scene_Level::sCollision() {
     overlap = getOverlap(e, entities.player());
     // 2 bcs we give some breathing room for hero
     if (overlap.x > 2 && overlap.y > 2) {
-      entities.player().getComponent<CHP>().currentHp -= e.getComponent<CDamage>().damage;
+      if (!entities.player().hasComponent<CInvincibility>()) {
+        entities.player().getComponent<CHP>().currentHp -= e.getComponent<CDamage>().damage;
+        entities.player().addComponent<CInvincibility>(90);
+        if (entities.player().getComponent<CHP>().currentHp == 1) {
+          game->getAssets().getSound(SOUNDHEARTBEAT).play();
+        }
+      }
+    }
+    // PatrolAI check
+    if (e.hasComponent<CPatrolAI>()) {
+      CPatrolAI& pai = e.getComponent<CPatrolAI>();
+      if (isInside(pai.nextPosition(), e)) {
+        pai.incrementPosition();
+      }
     }
   }
-  /*
+  
+  Entity player = entities.player();
   // Do player + ETILE
   for (auto t : entities.getEntities(ETILE)) {
-    overlap = getOverlap(player, t);
-    auto prevOverlap = getPreviousOverlap(player, t);
-    // If we are colliding
-    if (overlap.x > 0 && overlap.y > 0) {
-      //Finish collision
-      if (t->getComponent<CAnimation>().animation.getName() == ANIMFINISH) {
-        hasEnded = true;
-      } else {
-        // We are coming from left or right
-        if (prevOverlap.y > 0) {
-          // Left
-          if (player->getComponent<CTransform>().previousPos.x > t->getComponent<CTransform>().pos.x) {
-            player->getComponent<CTransform>().pos.x += overlap.x;
-          } else { // Right
-            player->getComponent<CTransform>().pos.x -= overlap.x;
+    if (t.getComponent<CAABB>().blockMovement) {
+      overlap = getOverlap(player, t);
+      Vec2 prevOverlap = getPreviousOverlap(player, t);
+      // If we are colliding
+      if (overlap.x > 0 && overlap.y > 0) {
+        // Up/Down
+        if (prevOverlap.x > 0) {
+          // From Top
+          if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
+            player.getComponent<CTransform>().pos.y -= overlap.y;
           }
-        } else { // Coming from top or bottom
-          // Bottom
-          if (player->getComponent<CTransform>().previousPos.y > t->getComponent<CTransform>().pos.y) {
-            player->getComponent<CTransform>().pos.y += overlap.y;
-            player->getComponent<CInput>().jump = false;
-          } else { // Top
-            player->getComponent<CTransform>().pos.y -= overlap.y;
-            player->getComponent<CInput>().airborne = false;
+          else { // From bottom
+            player.getComponent<CTransform>().pos.y += overlap.y;
+          } // From left/right
+        }
+        else {
+          // From left
+          if (player.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
+            player.getComponent<CTransform>().pos.x -= overlap.x;
+          }
+          else { // From right
+            player.getComponent<CTransform>().pos.x += overlap.x;
           }
         }
       }
     }
-  }*/
+  }
   if (entities.player().getComponent<CHP>().currentHp == 0) {
     loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
   }

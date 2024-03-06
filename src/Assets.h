@@ -19,13 +19,17 @@ enum textureName {
   TEXHEROSIDERUN,
   TEXSWORD,
   TEXWATER,
-  TEXBORDER
+  TEXBORDER,
+  TEXBUSH,
+  TEXGRASS,
+  TEXTREE
 };
 
 //Enum of all sounds (prefix SOUND)
 enum soundName {
   SOUNDGOTHIT,
-  SOUNDHEARTBEAT
+  SOUNDHEARTBEAT,
+  SOUNDHERODEATH
 };
 
 //Enum of all fonts (prefix FONT)
@@ -43,6 +47,7 @@ enum musicName {
 class Assets {
   std::map<textureName, sf::Texture> textures; // map of textureNames to sf::Textures
   std::map<animationName, Animation> animations; // map of animationNames to Animations
+  std::map<soundName, sf::SoundBuffer> soundbuffers; // map of soundbuffers (Texture->Sprite == SoundBuffer->Sound)
   std::map<soundName, sf::Sound> sounds; // map of soundNames to sf::Sound
   std::map<fontName, sf::Font> fonts; // map of fontNames to sf::Font
   std::map<musicName, sf::Music> music; // map of musicNames to sf::Music

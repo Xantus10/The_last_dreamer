@@ -12,6 +12,9 @@ T assets/textures/HeroSideRun.png
 T assets/textures/Sword.png
 T assets/textures/Water.png
 T assets/textures/Border.png
+T assets/textures/Bush.png
+T assets/textures/Grass.png
+T assets/textures/Tree.png
 A 0 2 18
 A 1 18 2
 A 2 1 0
@@ -26,7 +29,11 @@ A 10 4 10
 A 11 1 0
 A 12 1 0
 A 13 1 0
+A 14 1 0
+A 15 1 0
+A 16 1 0
 S assets/sounds/GotHit.ogg
 S assets/sounds/Heartbeat.ogg
+S assets/sounds/HeroDeathSound.ogg
 F assets/fonts/Anton-Regular.ttf
 F assets/fonts/Inconsolata-Regular.ttf

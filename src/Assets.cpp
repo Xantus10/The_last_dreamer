@@ -17,13 +17,13 @@ void Assets::addAnimation(animationName name, const Animation& animation) {
 }
 
 void Assets::addSound(soundName name, std::string& path) {
-  std::shared_ptr<sf::SoundBuffer> sb = std::make_shared<sf::SoundBuffer>();
+  soundbuffers[name] = sf::SoundBuffer();
   sounds[name] = sf::Sound();
-  if (!sb->loadFromFile(path)) {
+  if (!soundbuffers[name].loadFromFile(path)) {
     std::cout << "ERROR: Could not load sound from (" << path << ")\n";
     return;
   }
-  sounds[name].setBuffer(*sb); // Maybe sounds will not work!
+  sounds[name].setBuffer(soundbuffers[name]);
 }
 
 void Assets::addFont(fontName name, std::string& path) {
