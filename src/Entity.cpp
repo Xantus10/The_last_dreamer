@@ -1,12 +1,8 @@
 #include "Entity.h"
 
 
-Entity::Entity(const size_t aId)
-  : eid(aId) {}
-
-void Entity::setMemPoolAddress(size_t addr) {
-  memPoolAddress = addr;
-}
+Entity::Entity(const size_t aAddress)
+  : memPoolAddress(aAddress) {}
 
 //Get the value of isAlive
 bool Entity::isAlive() const {
@@ -20,7 +16,7 @@ const enum EntityTag Entity::tag() const {
 
 //Get the value of id
 const size_t Entity::id() const {
-  return eid;
+  return memPoolAddress;
 }
 
 //Destroy the entity at the next update() EntityManager call

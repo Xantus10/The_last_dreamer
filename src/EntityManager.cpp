@@ -32,8 +32,7 @@ void EntityManager::update() {
 }
 
 Entity EntityManager::addEntity(const enum EntityTag tag) {
-  Entity e(entitiesCreated++);
-  e.setMemPoolAddress(EntitiesMemPool::Instance().addEntity(tag));
+  Entity e(EntitiesMemPool::Instance().addEntity(tag));
   toAdd.push_back(e);
   return e;
 }

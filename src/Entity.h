@@ -9,14 +9,11 @@ class Entity {
   //All Entities will be handled ONLY through EntityManager
   friend class EntityManager;
 
-  //Unique ID of an entity
-  size_t eid = 0;
-  //Index of cell in mempool // EVENTUALLY MAKE ONE VALUE and maybe decrease size
+  //Index of cell in mempool // EVENTUALLY maybe decrease size
   size_t memPoolAddress;
 
   //Private constructor
-  Entity(const size_t aId);
-  void setMemPoolAddress(size_t addr);
+  Entity(const size_t aAddress);
 public:
   //Templated Components Functions
 
@@ -44,11 +41,11 @@ public:
     EntitiesMemPool::Instance().removeComponent<T>(memPoolAddress);
   }
 
-  //Get the value of r_alive
+  //Get the value of alive
   bool isAlive() const;
-  //Get the value of r_tag
+  //Get the value of tag
   const enum EntityTag tag() const;
-  //Get the value of r_id
+  //Get the value of memAddress
   const size_t id() const;
   //Destroy the entity at the next update() EntityManager call
   void destroy();

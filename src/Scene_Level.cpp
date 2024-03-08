@@ -31,7 +31,6 @@ void Scene_Level::loadLevel() {
   int aName;
   int rX, rY, x, y;
   bool mb, vb;
-  float speed;
   while (levelFile >> id) {
     switch (id) {
       // Textures
@@ -96,6 +95,17 @@ void Scene_Level::loadLevel() {
 Vec2 Scene_Level::getPosition(int aRoomX, int aRoomY, int aEntityX, int aEntityY, Entity e) const {
   // X,Y = multiply room by window width and the individual pos of entity by 64 and add half size; (0,0 is in top left and level is 25 by 14 tiles)
   return Vec2(aRoomX * WINDOW_WIDTH + aEntityX * 64 + e.getComponent<CAABB>().halfSize.x, aRoomY * WINDOW_HEIGHT + aEntityY * 64 + e.getComponent<CAABB>().halfSize.x);
+}
+
+Vec2 getRoomNumber(Vec2& pos) {
+  Vec2 rNum((int)pos.x / (int)WINDOW_WIDTH, (int)pos.y / (int)WINDOW_HEIGHT);
+  if (pos.x < 0) {
+    rNum.x--;
+  }
+  if (pos.y < 0) {
+    rNum.y--;
+  }
+  return rNum;
 }
 
 char animationNameToDir(animationName n, float scalex) {
@@ -184,18 +194,28 @@ void Scene_Level::sMovement() {
     if (e.hasComponent<CFollowAI>()) {
       Vec2 path(1, 1);
       //FOLLOW AI mechanic
-      for (auto et : entities.getEntities(ETILE)) {
-        if (et.getComponent<CAABB>().blockVision) {
-          if (entityIntersect(transform.pos, entities.player().getComponent<CTransform>().pos, et)) {
-            path = Vec2(0, 0);
+      if (getRoomNumber(e.getComponent<CTransform>().pos) == getRoomNumber(entities.player().getComponent<CTransform>().pos)) {
+        for (auto et : entities.getEntities(ETILE)) {
+          if (et.getComponent<CAABB>().blockVision) {
+            if (entityIntersect(transform.pos, entities.player().getComponent<CTransform>().pos, et)) {
+              path = Vec2(0, 0);
+              break;
+            }
           }
         }
-      }
-      if (path == Vec2(1, 1)) {
-        path = entities.player().getComponent<CTransform>().pos - transform.pos;
-        path.normalize();
-        path *= e.getComponent<CFollowAI>().speed;
-        transform.velocity = path;
+        if (path == Vec2(1, 1)) {
+          path = entities.player().getComponent<CTransform>().pos - transform.pos;
+          path.normalize();
+          path *= e.getComponent<CFollowAI>().speed;
+          transform.velocity = path;
+        } else if (!isInside(e.getComponent<CFollowAI>().defaultPosition, e)) {
+          path = e.getComponent<CFollowAI>().defaultPosition - transform.pos;
+          path.normalize();
+          path *= e.getComponent<CFollowAI>().speed;
+          transform.velocity = path;
+        } else {
+          transform.velocity = Vec2(0, 0);
+        }
       } else if (!isInside(e.getComponent<CFollowAI>().defaultPosition, e)) {
         path = e.getComponent<CFollowAI>().defaultPosition - transform.pos;
         path.normalize();
@@ -400,31 +420,65 @@ void Scene_Level::sCollision() {
     if (t.getComponent<CAABB>().blockMovement) {
       overlap = getOverlap(player, t);
       Vec2 prevOverlap = getPreviousOverlap(player, t);
-      // If we are colliding
+      // If we are colliding note: We CANNOT do a bit of overlap btwn player and tile
       if (overlap.x > 0 && overlap.y > 0) {
-        // Up/Down
-        if (prevOverlap.x > 0) {
-          // From Top
-          if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
-            player.getComponent<CTransform>().pos.y -= overlap.y;
+        // Priority check for teleports
+        if (t.getComponent<CAnimation>().animation.getName() == ANIMTELEPORT) {
+          Entity secTp = t;
+          for (Entity t2 : entities.getEntities(ETILE)) {
+            // We search for the second TP
+            if (t2.getComponent<CAnimation>().animation.getName() == ANIMTELEPORT) {
+              // Check so we dont end up teleporting to OUR TP
+              if (t2.id() != t.id()) {
+                secTp = t2;
+                break;
+              }
+            }
           }
-          else { // From bottom
-            player.getComponent<CTransform>().pos.y += overlap.y;
-          } // From left/right
-        }
-        else {
-          // From left
-          if (player.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
-            player.getComponent<CTransform>().pos.x -= overlap.x;
+          char playerDir = velocityToDir(player.getComponent<CTransform>().velocity);
+          switch (playerDir) {
+            case 'w':
+              player.getComponent<CTransform>().pos = secTp.getComponent<CTransform>().pos + Vec2(0, -68);
+              break;
+            case 's':
+              player.getComponent<CTransform>().pos = secTp.getComponent<CTransform>().pos + Vec2(0, 68);
+              break;
+            case 'a':
+              player.getComponent<CTransform>().pos = secTp.getComponent<CTransform>().pos + Vec2(-68, 0);
+              break;
+            case 'd':
+              player.getComponent<CTransform>().pos = secTp.getComponent<CTransform>().pos + Vec2(68, 0);
+              break;
           }
-          else { // From right
-            player.getComponent<CTransform>().pos.x += overlap.x;
+        } else if (t.getComponent<CAnimation>().animation.getName() == ANIMHPCONTAINER) {
+          t.destroy();
+          player.getComponent<CHP>().currentHp = player.getComponent<CHP>().maxHp;
+        } else {
+          // Up/Down
+          if (prevOverlap.x > 0) {
+            // From Top
+            if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
+              player.getComponent<CTransform>().pos.y -= overlap.y;
+            }
+            else { // From bottom
+              player.getComponent<CTransform>().pos.y += overlap.y;
+            } // From left/right
+          }
+          else {
+            // From left
+            if (player.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
+              player.getComponent<CTransform>().pos.x -= overlap.x;
+            }
+            else { // From right
+              player.getComponent<CTransform>().pos.x += overlap.x;
+            }
           }
         }
       }
     }
   }
-  if (entities.player().getComponent<CHP>().currentHp == 0) {
+  if (entities.player().getComponent<CHP>().currentHp <= 0) {
+    game->getAssets().getSound(SOUNDHERODEATH).play();
     loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
   }
 }
@@ -433,15 +487,9 @@ void Scene_Level::sSetView() {
   if (cameraIsFollowMode) {
     view.setCenter(entities.player().getComponent<CTransform>().pos.x, entities.player().getComponent<CTransform>().pos.y);
   } else {
-    sf::Vector2f v = sf::Vector2f(((int)entities.player().getComponent<CTransform>().pos.x / (int)WINDOW_WIDTH) * WINDOW_WIDTH + WINDOW_WIDTH / 2,
-      ((int)entities.player().getComponent<CTransform>().pos.y / (int)WINDOW_HEIGHT)* WINDOW_HEIGHT + WINDOW_HEIGHT / 2);
-    if (entities.player().getComponent<CTransform>().pos.x < 0) {
-      v.x-=WINDOW_WIDTH;
-    }
-    if (entities.player().getComponent<CTransform>().pos.y < 0) {
-      v.y-=WINDOW_HEIGHT;
-    }
-    view.setCenter(v);
+    Vec2 roomNumber = getRoomNumber(entities.player().getComponent<CTransform>().pos);
+    view.setCenter(roomNumber.x * WINDOW_WIDTH + WINDOW_WIDTH / 2,
+      roomNumber.y * WINDOW_HEIGHT + WINDOW_HEIGHT / 2);
   }
   
   game->getWindow().setView(view);

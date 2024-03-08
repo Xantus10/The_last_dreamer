@@ -20,7 +20,9 @@ enum animationName {
   ANIMBORDER,
   ANIMBUSH,
   ANIMGRASS,
-  ANIMTREE
+  ANIMTREE,
+  ANIMTELEPORT,
+  ANIMHPCONTAINER
 };
 
 //Animation functionality

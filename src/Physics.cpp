@@ -41,10 +41,10 @@ bool isInside(const Vec2& pos, Entity e) {
 Intersect lineIntersect(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& d) {
   Vec2 r = b - a;
   Vec2 s = d - c;
-  float rxs = r.x * s.y - r.y * s.x;
+  double rxs = r.x * s.y - r.y * s.x;
   Vec2 cMinusA = c - a;
-  float t = (cMinusA.x * s.y - cMinusA.y * s.x) / rxs;
-  float u = (cMinusA.x * r.y - cMinusA.y * r.x) / rxs;
+  double t = (cMinusA.x * s.y - cMinusA.y * s.x) / rxs;
+  double u = (cMinusA.x * r.y - cMinusA.y * r.x) / rxs;
   return { (t >= 0 && t <= 1 && u >= 0 && u <= 1), Vec2(a.x + t*r.x, a.y + t*r.y) };
 }
 
