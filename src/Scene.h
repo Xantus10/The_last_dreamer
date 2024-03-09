@@ -5,13 +5,12 @@
 #include "GameEnginePointer.h"
 
 
-// leveltypes - M for menu, L for levels, I for images, D for dialogues
+//levelName - name (len<=5), path to level,  leveltypes - M for menu, L for levels, D for dialogues
 struct NextLevel { std::string levelName, levelPath; char levelType; };
 
 class Scene {
 protected:
   GameEnginePointer* game; //Game object
-  EntityManager entities; //Scene's EntityManager
   size_t currentFrame; //Current frame of this scene
   bool paused=false; //Is the scene paused (Can the scene even be paused)
   bool hasEnded=false; //Has this scene ended
@@ -26,6 +25,7 @@ public:
   virtual void sRender() = 0; //Render all sprites to window
 
   bool getHasEnded(); // get if the scene ended
+  void notEnd();
   actionName getActionFromKey(int keycode); // get the action code corresponding to given keycode
   void registerAction(int aKeyCode, actionName aName); // ARg type could change //Register new action (Map the actionName to the keyCode) (call in init of all derived scenes)
   char getId();

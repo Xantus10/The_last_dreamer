@@ -1,0 +1,15 @@
+LVL1 ./assets/game_files/levels/level1.txt L
+./assets/game_files/dialogues/images/wsad.png
+./assets/game_files/dialogues/images/fightHpExplained.png
+./assets/game_files/dialogues/images/utilizeEnvironment.png
+D 0
+S Press WSAD to move around the map "
+D 1
+S Press Space to fight enemies "
+S Careful though, if an enemy touches you, you will lose HP "
+S You can regenerate HP using dream catchers "
+S Don't waste them! There is limited number of them "
+D 2
+S Try to utilize environment to your advantage "
+S Hide in grass or use teleport to travel the map "
+S Good luck! "

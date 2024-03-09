@@ -19,6 +19,7 @@ void Scene_Menu::init() {
 }
 
 void Scene_Menu::update() {
+  game->getWindow().setView(game->getWindow().getDefaultView());
   if (menuIndex < 0) {
     menuIndex = menuStrings.size() - 1;
   } else if (menuIndex >= menuStrings.size()) {

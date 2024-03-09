@@ -23,6 +23,10 @@ char Scene::getId() {
   return id;
 }
 
+void Scene::notEnd() {
+  hasEnded = false;
+}
+
 Scene::Scene(GameEnginePointer* aGame, std::string aLevelPath, char aId) 
   : game(aGame)
   , levelPath(aLevelPath)

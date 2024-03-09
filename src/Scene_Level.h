@@ -5,6 +5,7 @@
 struct PlayerConfig { int rX, rY, X, Y, BBWidth, BBHeight, Health; float speed; };
 
 class Scene_Level : public Scene {
+  EntityManager entities; //Scene's EntityManager
   PlayerConfig playerConfig;
   sf::View view;
   size_t lastAttackFrame = 0;

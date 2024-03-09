@@ -17,6 +17,7 @@ T assets/textures/Grass.png
 T assets/textures/Tree.png
 T assets/textures/Teleport.png
 T assets/textures/HealthContainer.png
+T assets/textures/Torch.png
 A 0 2 18
 A 1 18 2
 A 2 1 0
@@ -36,6 +37,7 @@ A 15 1 0
 A 16 1 0
 A 17 1 0
 A 18 1 0
+A 19 1 0
 S assets/sounds/GotHit.ogg
 S assets/sounds/Heartbeat.ogg
 S assets/sounds/HeroDeathSound.ogg

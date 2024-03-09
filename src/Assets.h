@@ -24,7 +24,8 @@ enum textureName {
   TEXGRASS,
   TEXTREE,
   TEXTELEPORT,
-  TEXHPCONTAINER
+  TEXHPCONTAINER,
+  TEXTORCH
 };
 
 //Enum of all sounds (prefix SOUND)

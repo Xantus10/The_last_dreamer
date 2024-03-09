@@ -4,6 +4,7 @@
 
 #include "Scene_Menu.h"
 #include "Scene_Level.h"
+#include "Scene_Dialogue.h"
 
 #include "GameEnginePointer.h"
 class GameEngine : public GameEnginePointer {
@@ -20,8 +21,8 @@ public:
   GameEngine();
   void run();
   void quit();
-  void changeScene(std::string& aSceneId, bool endCurrentScene = true);
-  void changeScene(std::string& aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene = true);
+  void changeScene(std::string aSceneId, bool endCurrentScene = true);
+  void changeScene(std::string aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene = true);
   Assets& getAssets();
   sf::RenderWindow& getWindow();
   void sUserInput(); //Construct action objects based on the input

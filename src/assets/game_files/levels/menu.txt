@@ -1,1 +1,1 @@
-LVL1 ./assets/game_files/levels/level1.txt L
+DLGTL ./assets/game_files/dialogues/tutorial.txt D

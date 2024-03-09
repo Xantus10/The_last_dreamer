@@ -1,0 +1,5 @@
+Alpha 0.1
+Basic functional version of the game
+
+Alpha 0.2
+Scene Dialogue introduced

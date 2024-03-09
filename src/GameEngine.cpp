@@ -79,8 +79,8 @@ void GameEngine::run() {
         if (scenesMap[currentScene]->nextLevel.levelType == 'L') {
          changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Level>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
         }
-        else if (scenesMap[currentScene]->nextLevel.levelType == 'I') {
-         // changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Image>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+        else if (scenesMap[currentScene]->nextLevel.levelType == 'D') {
+         changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Dialogue>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
         }
       }
     }
@@ -92,12 +92,13 @@ void GameEngine::quit() {
   running = false;
 }
 
-void GameEngine::changeScene(std::string& aSceneId, bool endCurrentScene) {
+void GameEngine::changeScene(std::string aSceneId, bool endCurrentScene) {
   if (endCurrentScene) scenesMap.erase(currentScene);
   currentScene = aSceneId;
+  scenesMap[currentScene]->notEnd();
 }
 
-void GameEngine::changeScene(std::string& aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene) {
+void GameEngine::changeScene(std::string aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene) {
   scenesMap[aSceneId] = aScenePtr;
   std::string tmp = aSceneId;
   if (endCurrentScene) scenesMap.erase(currentScene);
