@@ -11,5 +11,6 @@ S You can regenerate HP using dream catchers "
 S Don't waste them! There is limited number of them "
 D 2
 S Try to utilize environment to your advantage "
-S Hide in grass or use teleport to travel the map "
+S Hide in grass or use teleport to traverse the map quickly "
+S Your goal is to enter a crack in the world, that will take you to the next level "
 S Good luck! "

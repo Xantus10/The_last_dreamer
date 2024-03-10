@@ -16,6 +16,8 @@ void Scene_Menu::init() {
     t.setPosition(600, 200+i*90);
     menuTexts.push_back(t);
   }
+  // As the menu is the first scene, we create inventory here
+  heroInventory = std::make_shared<Inventory>();
 }
 
 void Scene_Menu::update() {

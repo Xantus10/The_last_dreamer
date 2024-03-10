@@ -3,6 +3,7 @@
 #include "Action.h"
 #include "Assets.h"
 #include "GameEnginePointer.h"
+#include "Inventory.h"
 
 
 //levelName - name (len<=5), path to level,  leveltypes - M for menu, L for levels, D for dialogues
@@ -17,6 +18,7 @@ protected:
   char id; // Id of the scene
   std::map<int, actionName> actionMap; //Map of sfml keycodes to action names
   std::string levelPath;
+  std::shared_ptr<Inventory> heroInventory;
 public:
   NextLevel nextLevel; // Next level information
 
@@ -29,6 +31,8 @@ public:
   actionName getActionFromKey(int keycode); // get the action code corresponding to given keycode
   void registerAction(int aKeyCode, actionName aName); // ARg type could change //Register new action (Map the actionName to the keyCode) (call in init of all derived scenes)
   char getId();
+  void setInventory(std::shared_ptr<Inventory> aInvPtr);
+  std::shared_ptr<Inventory> getInventory();
   Scene();
   Scene(GameEnginePointer* aGame, std::string aLevelPath, char aId);
 };

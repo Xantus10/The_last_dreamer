@@ -450,9 +450,11 @@ void Scene_Level::sCollision() {
               player.getComponent<CTransform>().pos = secTp.getComponent<CTransform>().pos + Vec2(68, 0);
               break;
           }
-        } else if (t.getComponent<CAnimation>().animation.getName() == ANIMHPCONTAINER) {
+        } else if (t.getComponent<CAnimation>().animation.getName() == ANIMHPCONTAINER) { // Priority check for HPCONTAINERS
           t.destroy();
           player.getComponent<CHP>().currentHp = player.getComponent<CHP>().maxHp;
+        } else if (t.getComponent<CAnimation>().animation.getName() == ANIMFINISH) {
+          hasEnded = true;
         } else {
           // Up/Down
           if (prevOverlap.x > 0) {
@@ -553,13 +555,13 @@ void Scene_Level::sDoAction(const Action& action) {
       entities.player().getComponent<CInput>().down = true;
       break;
     case ACTATTACK:
-      if (!entities.player().getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 20) {
+      if (!entities.player().getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 20 && !paused) {
         entities.player().getComponent<CInput>().attack = true;
         lastAttackFrame = currentFrame;
         spawnSword(entities.player());
       }
       break;
-
+      
     case ACTQUIT:
       hasEnded = true;
       nextLevel.levelName = "Menu";

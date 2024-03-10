@@ -95,14 +95,15 @@ void GameEngine::quit() {
 void GameEngine::changeScene(std::string aSceneId, bool endCurrentScene) {
   if (endCurrentScene) scenesMap.erase(currentScene);
   currentScene = aSceneId;
-  scenesMap[currentScene]->notEnd();
+  scenesMap[currentScene]->notEnd(); // note: no need to set inv here, as any scene should already have ptr to it
 }
 
 void GameEngine::changeScene(std::string aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene) {
   scenesMap[aSceneId] = aScenePtr;
-  std::string tmp = aSceneId;
+  std::shared_ptr<Inventory> tmpInv = scenesMap[currentScene]->getInventory();
   if (endCurrentScene) scenesMap.erase(currentScene);
-  currentScene = tmp;
+  currentScene = aSceneId;
+  scenesMap[currentScene]->setInventory(tmpInv);
 }
 
 Assets& GameEngine::getAssets() {

@@ -23,6 +23,14 @@ char Scene::getId() {
   return id;
 }
 
+void Scene::setInventory(std::shared_ptr<Inventory> aInvPtr) {
+  heroInventory = aInvPtr;
+}
+
+std::shared_ptr<Inventory> Scene::getInventory() {
+  return heroInventory;
+}
+
 void Scene::notEnd() {
   hasEnded = false;
 }
