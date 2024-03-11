@@ -76,8 +76,11 @@ bool Scene_Dialogue::sCheckEnd() {
 }
 
 void Scene_Dialogue::sDoAction(const Action& action) {
-  if (action.getActionType() == ACTSTART) {
+  if (action.getActionType() == ACTSTART && released) {
     sProcessNext();
+    released = false;
+  } else if (action.getActionType() == ACTEND) {
+    released = true;
   }
 }
 

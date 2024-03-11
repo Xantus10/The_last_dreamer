@@ -87,6 +87,18 @@ void Scene_Level::loadLevel() {
       }
       break;
     }
+    case 'R':
+    {
+      Entity e = entities.addEntity(ERING);
+      int HP, Dmg;
+      levelFile >> rX >> rY >> x >> y >> HP >> Dmg;
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMRING));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize());
+      e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
+      e.addComponent<CHP>(HP);
+      e.addComponent<CDamage>(Dmg);
+      break;
+    }
     }
   }
   entities.update();
@@ -352,9 +364,9 @@ void Scene_Level::sCollision() {
       overlap = getOverlap(e, s);
       if (overlap.x > 0 && overlap.y > 0) {
         if (!e.hasComponent<CInvincibility>()) {
-          e.getComponent<CHP>().currentHp -= s.getComponent<CDamage>().damage;
+          e.getComponent<CHP>().currentHp -= s.getComponent<CDamage>().damage+heroInventory->getEquipped().damage;
           game->getAssets().getSound(SOUNDGOTHIT).play();
-          if (e.getComponent<CHP>().currentHp == 0) {
+          if (e.getComponent<CHP>().currentHp <= 0) {
             e.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMENEMYDESTROY);
             e.removeComponent<CAABB>();
             if (e.hasComponent<CFollowAI>()) { e.getComponent<CFollowAI>().speed = 0; }
@@ -398,11 +410,16 @@ void Scene_Level::sCollision() {
     // 2 bcs we give some breathing room for hero
     if (overlap.x > 2 && overlap.y > 2) {
       if (!entities.player().hasComponent<CInvincibility>()) {
-        entities.player().getComponent<CHP>().currentHp -= e.getComponent<CDamage>().damage;
-        entities.player().addComponent<CInvincibility>(90);
-        if (entities.player().getComponent<CHP>().currentHp == 1) {
-          game->getAssets().getSound(SOUNDHEARTBEAT).play();
+        if (heroInventory->getEquipped().currentHp >= e.getComponent<CDamage>().damage) {
+          heroInventory->getEquipped().currentHp -= e.getComponent<CDamage>().damage;
+        } else if (heroInventory->getEquipped().currentHp > 0) {
+          entities.player().getComponent<CHP>().currentHp -= e.getComponent<CDamage>().damage - heroInventory->getEquipped().currentHp;
+          heroInventory->getEquipped().currentHp = 0;
+        } else {
+          entities.player().getComponent<CHP>().currentHp -= e.getComponent<CDamage>().damage;
         }
+        entities.player().addComponent<CInvincibility>(90);
+        game->getAssets().getSound(SOUNDHEARTBEAT).play();
       }
     }
     // PatrolAI check
@@ -453,6 +470,7 @@ void Scene_Level::sCollision() {
         } else if (t.getComponent<CAnimation>().animation.getName() == ANIMHPCONTAINER) { // Priority check for HPCONTAINERS
           t.destroy();
           player.getComponent<CHP>().currentHp = player.getComponent<CHP>().maxHp;
+          heroInventory->getEquipped().currentHp = heroInventory->getEquipped().maxHp;
         } else if (t.getComponent<CAnimation>().animation.getName() == ANIMFINISH) {
           hasEnded = true;
         } else {
@@ -479,6 +497,14 @@ void Scene_Level::sCollision() {
       }
     }
   }
+  for (auto r : entities.getEntities(ERING)) {
+    overlap = getOverlap(player, r);
+    if (overlap.x > 0 && overlap.y > 0 && heroInventory->getEmptySpaceIx() != -1) {
+      Ring ring(r.getComponent<CDamage>().damage, r.getComponent<CHP>().maxHp);
+      r.destroy();
+      heroInventory->giveIntoInventory(ring);
+    }
+  }
   if (entities.player().getComponent<CHP>().currentHp <= 0) {
     game->getAssets().getSound(SOUNDHERODEATH).play();
     loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
@@ -498,11 +524,17 @@ void Scene_Level::sSetView() {
 }
 
 void Scene_Level::sRender() {
-  sf::Font font = game->getAssets().getFont(FONTINCONSOLATAREG);
+  sf::Font& font = game->getAssets().getFont(FONTINCONSOLATAREG);
   sf::Text hpText;
   auto& window = game->getWindow();
   window.clear();
   for (auto e : entities.getEntities(ETILE)) {
+    if (e.hasComponent<CAnimation>()) {
+      e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+      window.draw(e.getComponent<CAnimation>().animation.getSprite());
+    }
+  }
+  for (auto e : entities.getEntities(ERING)) {
     if (e.hasComponent<CAnimation>()) {
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
@@ -527,7 +559,7 @@ void Scene_Level::sRender() {
   }
   for (auto e : entities.getEntities(EPLAYER)) {
     if (e.hasComponent<CAnimation>()) {
-      hpText = sf::Text(std::to_string(e.getComponent<CHP>().currentHp), font, 22);
+      hpText = sf::Text(std::to_string(e.getComponent<CHP>().currentHp + heroInventory->getEquipped().currentHp), font, 22);
       hpText.setOrigin(hpText.getLocalBounds().width / 2.0f, hpText.getLocalBounds().height / 2.0f);
       hpText.setFillColor(sf::Color(230, 0, 0));
       hpText.setPosition(e.getComponent<CTransform>().pos.x-2, e.getComponent<CTransform>().pos.y-58);
@@ -535,6 +567,54 @@ void Scene_Level::sRender() {
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
       window.draw(hpText);
     }
+  }
+  // Bcs we .display() in sInventory()
+  if (!paused) {
+    window.display();
+  }
+}
+
+
+Vec2 Scene_Level::getCenterOfScreen() {
+  Vec2 center;
+  if (cameraIsFollowMode) {
+    center = entities.player().getComponent<CTransform>().pos;
+  } else {
+    Vec2 roomNumber = getRoomNumber(entities.player().getComponent<CTransform>().pos);
+    center = Vec2((roomNumber.x * WINDOW_WIDTH + WINDOW_WIDTH / 2),
+      (roomNumber.y * WINDOW_HEIGHT + WINDOW_HEIGHT / 2));
+  }
+  return center;
+}
+
+
+void Scene_Level::sInventory() {
+  auto& window = game->getWindow();
+  sf::Font& font = game->getAssets().getFont(FONTANTONREG);
+  sf::Text helpText, statText;
+  Vec2 center = getCenterOfScreen();
+  
+  // Draw ---Equipped---
+  helpText = sf::Text("---Equipped---", font);
+  helpText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
+  helpText.setPosition(center.x, center.y - 100);
+  window.draw(helpText);
+  // Draw equipped item stats
+  statText = sf::Text(heroInventory->getEquipped().getPrintableInfo(), font);
+  statText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
+  statText.setPosition(center.x, center.y - 50);
+  window.draw(statText);
+  // Draw ---Inventory---
+  helpText = sf::Text("---Inventory---", font);
+  helpText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
+  helpText.setPosition(center.x, center.y);
+  window.draw(helpText);
+  // Draw inventory item stats
+  for (int i = 0; i < INVENTORY_SIZE; i++) {
+    statText = sf::Text(heroInventory->getInventoryAtIx(i).getPrintableInfo(), font);
+    statText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
+    statText.setPosition(center.x, center.y + 50*(i+1));
+    window.draw(statText);
   }
   window.display();
 }
@@ -574,7 +654,7 @@ void Scene_Level::sDoAction(const Action& action) {
     case ACTSELECT:
       cameraIsFollowMode = !cameraIsFollowMode;
     }
-  } else {
+  } else if (action.getActionType() == ACTEND) {
     auto& anim = entities.player().getComponent<CAnimation>();
     switch (action.getActionName()) {
     case ACTUP:
@@ -610,21 +690,28 @@ void Scene_Level::sDoAction(const Action& action) {
       }
       break;
     }
+  } else if (action.getActionType() == ACTMOUSEDOWN && paused) {
+    Vec2 center(WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
+    for (int i=0; i < INVENTORY_SIZE; i++) {
+      if (isBetween(Vec2(action.getEvent()->mouseButton.x, action.getEvent()->mouseButton.y), center + Vec2(-160, (i + 1) * 50 - 20), center + Vec2(160, (i + 2) * 50 - 20))) {
+        heroInventory->equip(i);
+      }
+    }
   }
 }
 
-void sDebug() {} // only maybe implement
-
 void Scene_Level::update() {
   entities.update(); // First of all update the entities (remove and add)
+  sRender(); // Render (We have to do it 1st, bcs of inventory)
   if (!paused) {
     sMovement(); // Call movement first
     sCollision(); // After movement call collisions to resolve any overlaps
     sSetView(); // After position has been resolved make the camera close in on player
     sAnimation(); // Then call animations (Because of player attack animation)
     sLifespan(); // Then update the lifespan of all entities (honestly doesnt matter where)
-    sInvincibility(); //// Then update the iframes of all entities (honestly doesnt matter where)
+    sInvincibility(); // Then update the iframes of all entities (honestly doesnt matter where)
+  } else {
+    sInventory(); // If we are paused, we will show inventory
   }
-  sRender(); // After everything render
   currentFrame++;
 }

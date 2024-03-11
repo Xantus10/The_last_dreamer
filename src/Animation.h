@@ -24,7 +24,8 @@ enum animationName {
   ANIMTELEPORT,
   ANIMHPCONTAINER,
   ANIMTORCH,
-  ANIMFINISH
+  ANIMFINISH,
+  ANIMRING
 };
 
 //Animation functionality

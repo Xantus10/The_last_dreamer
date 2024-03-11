@@ -115,17 +115,22 @@ sf::RenderWindow& GameEngine::getWindow() {
 }
 
 void GameEngine::sUserInput() {
-  sf::Event event;
-  while (window.pollEvent(event)) {
-    if (event.type == sf::Event::Closed) {
+  sf::Event windowEvent;
+  while (window.pollEvent(windowEvent)) {
+    if (windowEvent.type == sf::Event::Closed) {
       running = false;
     }
 
-    if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased) {
-      actionName name = scenesMap[currentScene]->getActionFromKey(event.key.code);
+    if (windowEvent.type == sf::Event::KeyPressed || windowEvent.type == sf::Event::KeyReleased) {
+      actionName name = scenesMap[currentScene]->getActionFromKey(windowEvent.key.code);
       if (name == ACTNOOPERATION) { continue; }
-      const actionType t = (event.type == sf::Event::KeyPressed) ? ACTSTART : ACTEND;
+      const actionType t = (windowEvent.type == sf::Event::KeyPressed) ? ACTSTART : ACTEND;
       scenesMap[currentScene]->sDoAction(Action(name, t));
+    }
+
+    if (windowEvent.type == sf::Event::MouseButtonPressed || windowEvent.type == sf::Event::MouseButtonReleased) {
+      const actionType t = (windowEvent.type == sf::Event::MouseButtonPressed) ? ACTMOUSEDOWN : ACTMOUSEUP;
+      scenesMap[currentScene]->sDoAction(Action(t, &windowEvent));
     }
   }
 }

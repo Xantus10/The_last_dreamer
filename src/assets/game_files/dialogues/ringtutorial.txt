@@ -1,0 +1,8 @@
+LVL2 assets/game_files/levels/level2.txt L
+./assets/game_files/dialogues/images/rings.png
+./assets/game_files/dialogues/images/rings.png
+./assets/game_files/dialogues/images/rings.png
+D 0
+S You can find a few rings, scattered across the levels "
+S These rings will provide you with various bonuses "
+S You can view and equip them with pressing 'P' and pausing the game "

@@ -11,6 +11,7 @@ class Scene_Dialogue : public Scene {
   std::vector<Animation> imgAnimations;
   std::vector<DialogueInstruction> instructions;
   sf::Text messageText;
+  bool released = false;
 
   uint16_t currentImgIndex;
   uint16_t currentInstructionIndex;

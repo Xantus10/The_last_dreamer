@@ -18,6 +18,10 @@ void Scene_Menu::init() {
   }
   // As the menu is the first scene, we create inventory here
   heroInventory = std::make_shared<Inventory>();
+  heroInventory->giveIntoInventory(Ring(1, 1));
+  heroInventory->giveIntoInventory(Ring(2, 2));
+  heroInventory->giveIntoInventory(Ring(3, 3));
+  heroInventory->giveIntoInventory(Ring(4, 4));
 }
 
 void Scene_Menu::update() {

@@ -3,3 +3,7 @@ Basic functional version of the game
 
 Alpha 0.2
 Scene Dialogue introduced
+
+Alpha 0.3
+Multi-level design
+Inventory

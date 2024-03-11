@@ -37,6 +37,10 @@ bool isInside(const Vec2& pos, Entity e) {
     (pos.y > (eTransform.pos.y - eAABB.halfSize.y) && pos.y < (eTransform.pos.y + eAABB.halfSize.y));
 }
 
+bool isBetween(const Vec2& pos, Vec2 startpos, Vec2 endpos) {
+  return (pos.x > startpos.x && pos.x < endpos.x) && (pos.y > startpos.y && pos.y < endpos.y);
+}
+
 // Line intersection
 Intersect lineIntersect(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& d) {
   Vec2 r = b - a;

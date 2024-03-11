@@ -15,5 +15,6 @@ public:
 
   void giveIntoInventory(Ring aNewRing);
   int getEmptySpaceIx();
+  void equip(int ix);
 };
 

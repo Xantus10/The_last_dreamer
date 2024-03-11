@@ -1,4 +1,4 @@
-Lvl2 assets/game_files/levels/level2.txt L
+DLGRT ./assets/game_files/dialogues/ringtutorial.txt D
 T 13 0 0 0 -1 1 0
 T 13 0 0 1 -1 1 0
 T 13 0 0 2 -1 1 0

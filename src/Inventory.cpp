@@ -16,6 +16,10 @@ Ring& Inventory::getInventoryAtIx(int ix) {
 
 
 void Inventory::giveIntoInventory(Ring aNewRing) {
+  if (equipped.maxHp == 0 && equipped.damage == 0) {
+    equipped = aNewRing;
+    return;
+  }
   int ix = getEmptySpaceIx();
   if (ix == -1) {
     std::cout << "Wrong usage of inventory! Check for empty space with getEmptySpaceIx\n";
@@ -33,4 +37,13 @@ int Inventory::getEmptySpaceIx() {
     }
   }
   return ix;
+}
+
+void Inventory::equip(int ix) {
+  if (ix < 0 || ix > INVENTORY_SIZE - 1) {
+    ix = 0;
+  }
+  Ring tmp = equipped;
+  equipped = inventory[ix];
+  inventory[ix] = tmp;
 }

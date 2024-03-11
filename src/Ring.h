@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 
 class Ring {
 public:
@@ -10,5 +11,7 @@ public:
 
   Ring();
   Ring(uint16_t aDamage, uint16_t aHp);
+
+  std::string getPrintableInfo();
 };
 
