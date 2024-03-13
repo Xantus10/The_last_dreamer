@@ -507,7 +507,8 @@ void Scene_Level::sCollision() {
   }
   if (entities.player().getComponent<CHP>().currentHp <= 0) {
     game->getAssets().getSound(SOUNDHERODEATH).play();
-    loadLevel(); // TODO: Add respawn(), it will destroy all EENEMY, EBULLET, EPLAYER | and recreate them, BUT it will preserve the map layout, also add EDESTROYABLE, for bricks and respawn them as well
+    entities.freeAllEntities();
+    loadLevel();
   }
 }
 
@@ -643,6 +644,7 @@ void Scene_Level::sDoAction(const Action& action) {
       break;
       
     case ACTQUIT:
+      entities.freeAllEntities();
       hasEnded = true;
       nextLevel.levelName = "Menu";
       nextLevel.levelPath = "";

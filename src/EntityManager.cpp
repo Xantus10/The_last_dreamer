@@ -8,9 +8,10 @@ EntityManager::EntityManager() {
 void EntityManager::removeDeadEntities(std::vector<Entity>& vec) {
   int entitiesErased = 0;
   EntitiesMemPool& mempool = EntitiesMemPool::Instance();
-  for (int i = 0; i < vec.size(); i++) {
-    if (!(vec.at(i).isAlive())) {
-      mempool.stripTag(vec.at(i).memPoolAddress); // note: calls twice as much
+  size_t size = vec.size();
+  for (int i = 0; i < size; i++) {
+    if (!(vec.at(i - entitiesErased).isAlive())) {
+      mempool.stripTag(vec.at(i - entitiesErased).memPoolAddress); // note: calls twice as much
       vec.erase(vec.begin() + (i - entitiesErased));
       entitiesErased++;
     }
@@ -47,4 +48,11 @@ const std::vector<Entity>& EntityManager::getEntities(const enum EntityTag tag) 
 
 Entity EntityManager::player() {
   return getEntities(EPLAYER)[0];
+}
+
+void EntityManager::freeAllEntities() {
+  for (auto e : entities) {
+    e.destroy();
+  }
+  update();
 }
