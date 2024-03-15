@@ -89,7 +89,7 @@ void Scene_Level::loadLevel() {
     }
     case 'R':
     {
-      Entity e = entities.addEntity(ERING);
+      Entity e = entities.addEntity(EITEM);
       int HP, Dmg;
       levelFile >> rX >> rY >> x >> y >> HP >> Dmg;
       e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMRING));
@@ -98,6 +98,14 @@ void Scene_Level::loadLevel() {
       e.addComponent<CHP>(HP);
       e.addComponent<CDamage>(Dmg);
       break;
+    }
+    case 'K':
+    {
+      /* Add code for keys */
+    }
+    case 'B':
+    {
+      /* Add code for EBLOCKTILE */
     }
     }
   }
@@ -497,9 +505,9 @@ void Scene_Level::sCollision() {
       }
     }
   }
-  for (auto r : entities.getEntities(ERING)) {
+  for (auto r : entities.getEntities(EITEM)) {
     overlap = getOverlap(player, r);
-    if (overlap.x > 0 && overlap.y > 0 && heroInventory->getEmptySpaceIx() != -1) {
+    if (overlap.x > 0 && overlap.y > 0 && heroInventory->getEmptySpaceIx() != -1) { /* DO CHECK IF ITS A RING OR AN ITEM */
       Ring ring(r.getComponent<CDamage>().damage, r.getComponent<CHP>().maxHp);
       r.destroy();
       heroInventory->giveIntoInventory(ring);
@@ -535,7 +543,7 @@ void Scene_Level::sRender() {
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
     }
   }
-  for (auto e : entities.getEntities(ERING)) {
+  for (auto e : entities.getEntities(EITEM)) {
     if (e.hasComponent<CAnimation>()) {
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       window.draw(e.getComponent<CAnimation>().animation.getSprite());

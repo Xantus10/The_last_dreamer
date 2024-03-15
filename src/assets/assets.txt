@@ -20,6 +20,12 @@ T assets/textures/HealthContainer.png
 T assets/textures/Torch.png
 T assets/textures/FinishCrack.png
 T assets/textures/Ring.png
+T assets/textures/KeyGreen.png
+T assets/textures/KeyPurple.png
+T assets/textures/KeyYellow.png
+T assets/textures/BlockGreen.png
+T assets/textures/BlockPurple.png
+T assets/textures/BlockYellow.png
 A 0 2 18
 A 1 18 2
 A 2 1 0
@@ -42,6 +48,12 @@ A 18 1 0
 A 19 1 0
 A 20 4 10
 A 21 5 14
+A 22 1 0
+A 23 1 0
+A 24 1 0
+A 25 1 0
+A 26 1 0
+A 27 1 0
 S assets/sounds/GotHit.ogg
 S assets/sounds/Heartbeat.ogg
 S assets/sounds/HeroDeathSound.ogg
