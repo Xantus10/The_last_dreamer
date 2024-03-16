@@ -101,11 +101,21 @@ void Scene_Level::loadLevel() {
     }
     case 'K':
     {
-      /* Add code for keys */
+      Entity e = entities.addEntity(EITEM);
+      levelFile >> aName >> rX >> rY >> x >> y;
+      e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
+      e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
+      break;
     }
     case 'B':
     {
-      /* Add code for EBLOCKTILE */
+      Entity e = entities.addEntity(EBLOCK);
+      levelFile >> aName >> rX >> rY >> x >> y;
+      e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
+      e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
+      break;
     }
     }
   }
@@ -180,7 +190,7 @@ void Scene_Level::sAnimation() {
       // Update the animation
       eAnimation.animation.update();
       // If the animation is destroy, the entity should get destroyed on animation end
-      if ((eAnimation.animation.getName() == ANIMENEMYDESTROY) && eAnimation.animation.hasEnded()) {
+      if ((!eAnimation.repeating) && eAnimation.animation.hasEnded()) {
         e.destroy();
       }
     }
@@ -376,6 +386,7 @@ void Scene_Level::sCollision() {
           game->getAssets().getSound(SOUNDGOTHIT).play();
           if (e.getComponent<CHP>().currentHp <= 0) {
             e.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMENEMYDESTROY);
+            e.getComponent<CAnimation>().repeating = false;
             e.removeComponent<CAABB>();
             if (e.hasComponent<CFollowAI>()) { e.getComponent<CFollowAI>().speed = 0; }
             else { e.getComponent<CPatrolAI>().speed = 0; }
@@ -409,6 +420,32 @@ void Scene_Level::sCollision() {
             else { // From right
               e.getComponent<CTransform>().pos.x += overlap.x;
             }
+          }
+        }
+      }
+    }
+    // Enemy + block (Same as e + tile)
+    for (auto t : entities.getEntities(EBLOCK)) {
+      overlap = getOverlap(e, t);
+      Vec2 prevOverlap = getPreviousOverlap(e, t);
+      if (overlap.x > 0 && overlap.y > 0) {
+        // Up/Down
+        if (prevOverlap.x > 0) {
+          // From Top
+          if (e.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
+            e.getComponent<CTransform>().pos.y -= overlap.y;
+          }
+          else { // From bottom
+            e.getComponent<CTransform>().pos.y += overlap.y;
+          } // From left/right
+        }
+        else {
+          // From left
+          if (e.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
+            e.getComponent<CTransform>().pos.x -= overlap.x;
+          }
+          else { // From right
+            e.getComponent<CTransform>().pos.x += overlap.x;
           }
         }
       }
@@ -505,12 +542,58 @@ void Scene_Level::sCollision() {
       }
     }
   }
-  for (auto r : entities.getEntities(EITEM)) {
-    overlap = getOverlap(player, r);
-    if (overlap.x > 0 && overlap.y > 0 && heroInventory->getEmptySpaceIx() != -1) { /* DO CHECK IF ITS A RING OR AN ITEM */
-      Ring ring(r.getComponent<CDamage>().damage, r.getComponent<CHP>().maxHp);
-      r.destroy();
-      heroInventory->giveIntoInventory(ring);
+  // Player + Items (Ring/Key)
+  for (auto i : entities.getEntities(EITEM)) {
+    overlap = getOverlap(player, i);
+    if (overlap.x > 0 && overlap.y > 0) {
+      animationName animName = i.getComponent<CAnimation>().animation.getName();
+      if (animName == ANIMRING) {
+        if (i.getComponent<CAnimation>().animation.getName()) {
+          Ring ring(i.getComponent<CDamage>().damage, i.getComponent<CHP>().maxHp);
+          i.destroy();
+          heroInventory->giveIntoInventory(ring);
+        }
+      } else { // Keys
+        i.removeComponent<CAABB>();
+        // Opaticity to 0
+        i.getComponent<CAnimation>().animation.getSprite().setColor(sf::Color(0, 0, 0, 0));
+        for (auto b : entities.getEntities(EBLOCK)) {
+          if ((animationName)((int)b.getComponent<CAnimation>().animation.getName() - 3) == animName) {
+            b.removeComponent<CAABB>();
+            // Opaticity to 0
+            b.getComponent<CAnimation>().animation.getSprite().setColor(sf::Color(0, 0, 0, 0));
+          }
+        }
+      }
+    }
+  }
+  // Do player + ETILE
+  for (auto t : entities.getEntities(EBLOCK)) {
+    if (t.getComponent<CAABB>().blockMovement) {
+      overlap = getOverlap(player, t);
+      Vec2 prevOverlap = getPreviousOverlap(player, t);
+      // If we are colliding note: We CANNOT do a bit of overlap btwn player and tile
+      if (overlap.x > 0 && overlap.y > 0) {
+        // Up/Down
+        if (prevOverlap.x > 0) {
+          // From Top
+          if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
+            player.getComponent<CTransform>().pos.y -= overlap.y;
+          }
+          else { // From bottom
+            player.getComponent<CTransform>().pos.y += overlap.y;
+          } // From left/right
+        }
+        else {
+          // From left
+          if (player.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
+            player.getComponent<CTransform>().pos.x -= overlap.x;
+          }
+          else { // From right
+            player.getComponent<CTransform>().pos.x += overlap.x;
+          }
+        }
+      }
     }
   }
   if (entities.player().getComponent<CHP>().currentHp <= 0) {
@@ -543,10 +626,18 @@ void Scene_Level::sRender() {
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
     }
   }
-  for (auto e : entities.getEntities(EITEM)) {
+  for (auto e : entities.getEntities(EBLOCK)) {
     if (e.hasComponent<CAnimation>()) {
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
+    }
+  }
+  for (auto e : entities.getEntities(EITEM)) {
+    if (e.hasComponent<CAnimation>()) {
+      e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+      if (e.getComponent<CAnimation>().animation.getName() == ANIMRING || e.getComponent<CHP>().currentHp > 0) {
+        window.draw(e.getComponent<CAnimation>().animation.getSprite());
+      }
     }
   }
   for (auto e : entities.getEntities(EENEMY)) {

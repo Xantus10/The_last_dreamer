@@ -56,10 +56,10 @@ public:
 class CAnimation : public Component {
 public:
   Animation animation;
-  bool repeating = false;
+  bool repeating = true;
 
   CAnimation() {}
-  CAnimation(Animation& aAnimation, bool aRepeat=false)
+  CAnimation(Animation& aAnimation, bool aRepeat=true)
     : animation(aAnimation)
     , repeating(aRepeat) {}
 };

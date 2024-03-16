@@ -7,3 +7,7 @@ Scene Dialogue introduced
 Alpha 0.3
 Multi-level design
 Inventory
+
+Alpha 0.4
+Added Keys+Doors functionality
+Fixed memory leak when creating new levels
