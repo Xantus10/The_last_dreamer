@@ -9,6 +9,7 @@
 //levelName - name (len<=5), path to level,  leveltypes - M for menu, L for levels, D for dialogues
 struct NextLevel { std::string levelName, levelPath; char levelType; };
 
+
 class Scene {
 protected:
   GameEnginePointer* game; //Game object
@@ -29,7 +30,7 @@ public:
   bool getHasEnded(); // get if the scene ended
   void notEnd();
   actionName getActionFromKey(int keycode); // get the action code corresponding to given keycode
-  void registerAction(int aKeyCode, actionName aName); // ARg type could change //Register new action (Map the actionName to the keyCode) (call in init of all derived scenes)
+  void registerAction(int aKeyCode, actionName aName); //Register new action (Map the actionName to the keyCode) (call in init of all derived scenes)
   char getId();
   void setInventory(std::shared_ptr<Inventory> aInvPtr);
   std::shared_ptr<Inventory> getInventory();

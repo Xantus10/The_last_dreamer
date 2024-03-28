@@ -5,6 +5,7 @@
 #include "Scene_Menu.h"
 #include "Scene_Level.h"
 #include "Scene_Dialogue.h"
+#include "Scene_Night.h"
 
 #include "GameEnginePointer.h"
 class GameEngine : public GameEnginePointer {

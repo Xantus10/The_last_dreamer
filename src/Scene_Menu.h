@@ -8,6 +8,7 @@ class Scene_Menu : public Scene {
   int menuIndex;
 
   void init();
+  void initInventory();
   void update();
 
   void sDoAction(const Action& action);

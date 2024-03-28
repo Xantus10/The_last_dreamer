@@ -567,7 +567,7 @@ void Scene_Level::sCollision() {
       }
     }
   }
-  // Do player + ETILE
+  // Do player + EBLOCK (same as etile)
   for (auto t : entities.getEntities(EBLOCK)) {
     if (t.getComponent<CAABB>().blockMovement) {
       overlap = getOverlap(player, t);

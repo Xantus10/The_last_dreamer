@@ -71,6 +71,7 @@ void GameEngine::run() {
   while (running) {
     sUserInput();
     scenesMap[currentScene]->update();
+    // Scene changing
     if (scenesMap[currentScene]->getHasEnded()) {
       if (scenesMap[currentScene]->nextLevel.levelPath == "") {
         changeScene(scenesMap[currentScene]->nextLevel.levelName);
@@ -81,6 +82,11 @@ void GameEngine::run() {
         }
         else if (scenesMap[currentScene]->nextLevel.levelType == 'D') {
          changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Dialogue>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+        }
+        else if (scenesMap[currentScene]->nextLevel.levelType == 'N') {
+          std::string tmp = currentScene;
+          changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Night>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+          scenesMap[currentScene]->nextLevel.levelName = tmp;
         }
       }
     }
