@@ -76,17 +76,18 @@ void GameEngine::run() {
       if (scenesMap[currentScene]->nextLevel.levelPath == "") {
         changeScene(scenesMap[currentScene]->nextLevel.levelName);
       } else {
-        bool endCur = (scenesMap[currentScene]->getId() != 'M');
-        if (scenesMap[currentScene]->nextLevel.levelType == 'L') {
-         changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Level>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
-        }
-        else if (scenesMap[currentScene]->nextLevel.levelType == 'D') {
-         changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Dialogue>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
-        }
-        else if (scenesMap[currentScene]->nextLevel.levelType == 'N') {
+        if (scenesMap[currentScene]->getId() == 'L' && scenesMap[currentScene]->endcode != -1) {
           std::string tmp = currentScene;
-          changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Night>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+          changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Night>(this, 
+            scenesMap[currentScene]->nightleakNextLevels[scenesMap[currentScene]->endcode].levelPath), false);
           scenesMap[currentScene]->nextLevel.levelName = tmp;
+        } else {
+          bool endCur = (scenesMap[currentScene]->getId() != 'M');
+          if (scenesMap[currentScene]->nextLevel.levelType == 'L') {
+            changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Level>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+          } else if (scenesMap[currentScene]->nextLevel.levelType == 'D') {
+            changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Dialogue>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
+          }
         }
       }
     }

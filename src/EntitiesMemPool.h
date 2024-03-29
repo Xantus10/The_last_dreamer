@@ -20,7 +20,9 @@ enum EntityTag {
   //Tag for pickupable items (rings, keys)
   EITEM,
   //Tag for blocks
-  EBLOCK
+  EBLOCK,
+  //Tag for nightleaks
+  ENIGHTLEAK
 };
 
 typedef std::tuple<

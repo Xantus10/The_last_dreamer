@@ -27,6 +27,7 @@ Vec2 Scene_Night::gridCoordToXY(float gridX, float gridY,Entity e) {
 void Scene_Night::loadLevel() {
   // Reload EntityManager
   entities = EntityManager();
+  nightmare = false;
 
   std::ifstream levelFile(levelPath);
 
@@ -37,15 +38,16 @@ void Scene_Night::loadLevel() {
     // Player
     case 'P':
     {
-      Entity e = entities.addEntity(EPLAYER);
+      player.destroy();
+      player = entities.addEntity(EPLAYER);
       levelFile >> playerConfig.spawnX >> playerConfig.spawnY >> playerConfig.BBWidth >> playerConfig.BBHeight
         >> playerConfig.speed >> playerConfig.jumpSpeed >> playerConfig.maxSpeed >> playerConfig.gravity;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMHEROSIDE));
-      e.addComponent<CAABB>(Vec2(playerConfig.BBWidth, playerConfig.BBHeight));
-      e.addComponent<CTransform>(gridCoordToXY(playerConfig.spawnX, playerConfig.spawnY, e), Vec2(0, 0), playerConfig.speed);
-      e.addComponent<CInput>();
+      player.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMHEROSIDE));
+      player.addComponent<CAABB>(Vec2(playerConfig.BBWidth, playerConfig.BBHeight));
+      player.addComponent<CTransform>(gridCoordToXY(playerConfig.spawnX, playerConfig.spawnY, player), Vec2(0, 0), playerConfig.speed);
+      player.addComponent<CInput>();
       view = game->getWindow().getDefaultView();
-      view.setCenter(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y-WINDOW_HEIGHT/4);
+      view.setCenter(player.getComponent<CTransform>().pos.x, player.getComponent<CTransform>().pos.y-WINDOW_HEIGHT/3);
       game->getWindow().setView(view);
       break;
     }
@@ -54,7 +56,7 @@ void Scene_Night::loadLevel() {
     {
       Entity e = entities.addEntity(EENEMY);
       levelFile >> x >> y;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMENEMYWITHARMOR)); /*PLACEHOLDER*/
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTWHEEL));
       e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
       break;
     }
@@ -62,7 +64,7 @@ void Scene_Night::loadLevel() {
     {
       Entity e = entities.addEntity(EITEM);
       levelFile >> x >> y;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMRING)); /*PLACEHOLDER*/
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTCOIN));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
       e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
       break;
@@ -71,7 +73,7 @@ void Scene_Night::loadLevel() {
     {
       Entity e = entities.addEntity(EBLOCK);
       levelFile >> x >> y;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMFLOORFLOWERS)); /*PLACEHOLDER*/
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTPLATFORM));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
       e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
       break;
@@ -104,7 +106,7 @@ void Scene_Night::sAnimation() {
   }
 }
 
-char velocityToDir(Vec2& vel) {
+char velocityToDirAD(Vec2& vel) {
   if (vel.x >= 0) {
     return 'd';
   }
@@ -112,9 +114,9 @@ char velocityToDir(Vec2& vel) {
 }
 
 void Scene_Night::sMovement() {
-  auto& playerTransform = entities.player().getComponent<CTransform>();
-  auto& playerInput = entities.player().getComponent<CInput>();
-  auto& playerAnimation = entities.player().getComponent<CAnimation>();
+  auto& playerTransform = player.getComponent<CTransform>();
+  auto& playerInput = player.getComponent<CInput>();
+  auto& playerAnimation = player.getComponent<CAnimation>();
   playerTransform.previousPos = playerTransform.pos;
 
   if (playerTransform.velocity.x == 0) {
@@ -131,7 +133,7 @@ void Scene_Night::sMovement() {
     }
   }
   else {
-    switch (velocityToDir(playerTransform.velocity)) {
+    switch (velocityToDirAD(playerTransform.velocity)) {
     case 'a':
       if (!playerInput.left) {
         playerTransform.velocity.x = 0;
@@ -148,9 +150,11 @@ void Scene_Night::sMovement() {
   // We utilize CInput.attack as airborne indicator
   if (playerInput.up && !playerInput.attack) {
     playerInput.attack = true;
-    playerTransform.velocity.y += playerConfig.jumpSpeed;
+    playerTransform.velocity.y -= playerConfig.jumpSpeed;
+  } else if (!playerInput.up && playerInput.attack && playerTransform.velocity.y < 0) {
+    playerTransform.velocity.y = 0;
   }
-  playerTransform.velocity.y -= playerConfig.gravity;
+  playerTransform.velocity.y += playerConfig.gravity;
 
   // Max speed check
   if (playerTransform.velocity.y > playerConfig.maxSpeed) {
@@ -164,17 +168,14 @@ void Scene_Night::sMovement() {
 
 void Scene_Night::sCollision() {
   Vec2 overlap;
-  Entity player = entities.player();
-
+  bool died = false;
+  
   for (auto e : entities.getEntities(EENEMY)) {
     // Player + enemy
     overlap = getOverlap(e, player);
-    // 2 bcs we give some breathing room for hero
-    if (overlap.x > 2 && overlap.y > 2) {
-      // If it collides with enemy we kill the hero and restart
-      game->getAssets().getSound(SOUNDHERODEATH).play();
-      entities.freeAllEntities();
-      loadLevel();
+    // 10 bcs we give some breathing room for hero
+    if (overlap.x > 10 && overlap.y > 10) {
+      died = true;
     }
   }
 
@@ -198,16 +199,16 @@ void Scene_Night::sCollision() {
       // If we are colliding note: We CANNOT do a bit of overlap btwn player and tile
       if (overlap.x > 0 && overlap.y > 0) {
         // Up/Down
-        if (prevOverlap.x > 0) {
+        if (prevOverlap.x >= 0) {
           // From Top
           if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
             player.getComponent<CTransform>().pos.y -= overlap.y;
-          }
-          else { // From bottom
-            player.getComponent<CTransform>().pos.y += overlap.y;
             // remove airborne
             player.getComponent<CTransform>().velocity.y = 0;
             player.getComponent<CInput>().attack = false;
+          }
+          else { // From bottom
+            player.getComponent<CTransform>().pos.y += overlap.y;
           } // From left/right
         }
         else {
@@ -222,26 +223,29 @@ void Scene_Night::sCollision() {
       }
     }
   }
-  if (entities.player().getComponent<CHP>().currentHp <= 0) {
-    
+  if (died) {
+    // If it collides with enemy we kill the hero and restart
+    game->getAssets().getSound(SOUNDHERODEATH).play();
+    entities.freeAllEntities();
+    loadLevel();
   }
 }
 
 void Scene_Night::sCoins() {
-  if (entities.getEntities().size() == 0) {
+  if (entities.getEntities(EITEM).size() == 0) {
     hasEnded = true;
     entities.freeAllEntities();
   }
 }
 
 void Scene_Night::sSetView() {
-  CTransform& playerTransform = entities.player().getComponent<CTransform>();
+  CTransform& playerTransform = player.getComponent<CTransform>();
   auto& tmp = view.getCenter();
   Vec2 viewPos(tmp.x, tmp.y);
-  if (abs(playerTransform.pos.x - viewPos.x) > 80) {
+  if (abs(playerTransform.pos.x - viewPos.x) > 50) {
     viewPos.x += playerTransform.velocity.x;
   }
-  if (abs(playerTransform.pos.y - viewPos.y) > 150) {
+  if (abs(playerTransform.pos.y - (viewPos.y + WINDOW_HEIGHT / 3)) > 30) {
     viewPos.y += playerTransform.velocity.y;
   }
   view.setCenter(viewPos.x, viewPos.y);
@@ -250,7 +254,7 @@ void Scene_Night::sSetView() {
 
 void Scene_Night::sRender() {
   auto& window = game->getWindow();
-  window.clear(sf::Color(5, 5, 50));
+  window.clear(sf::Color(3, 3, 35));
   for (auto e : entities.getEntities(EBLOCK)) {
     if (e.hasComponent<CAnimation>()) {
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
@@ -277,59 +281,56 @@ void Scene_Night::sRender() {
       window.draw(e.getComponent<CAnimation>().animation.getSprite());
     }
   }
+  window.display();
 }
 
 void Scene_Night::sDoAction(const Action& action) {
   if (action.getActionType() == ACTSTART) {
     switch (action.getActionName()) {
-    case ACTJUMP:
-      if (!player->getComponent<CInput>().airborne) {
-        player->getComponent<CInput>().jump = true;
-      }
-      break;
-    case ACTLEFT:
-      player->getComponent<CInput>().left = true;
-      break;
-    case ACTRIGHT:
-      player->getComponent<CInput>().right = true;
-      break;
-    case ACTSHOOT:
-      if (!player->getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 60) {
-        player->getComponent<CInput>().attack = true;
-        lastAttackFrame = currentFrame;
-        spawnBullet(player);
-        auto prevAnimationScale = player->getComponent<CAnimation>().animation.getSprite().getScale();
-        player->getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMMCSHOOT);
-        player->getComponent<CAnimation>().animation.getSprite().setScale(prevAnimationScale);
-      }
-      break;
-
-    case ACTQUIT:
-      hasEnded = true;
-      nextLevel.levelName = "Menu";
-      nextLevel.levelPath = "";
-      nextLevel.levelType = 'M';
-      break;
-    case ACTPAUSE:
-      paused = !paused;
-      break;
+      case ACTJUMP:
+        if (!player.getComponent<CInput>().attack) {
+          player.getComponent<CInput>().up = true;
+        }
+        break;
+      case ACTLEFT:
+        player.getComponent<CInput>().left = true;
+        break;
+      case ACTRIGHT:
+        player.getComponent<CInput>().right = true;
+        break;
+      case ACTPAUSE:
+        paused = !paused;
+        break;
     }
   } else {
+    auto& anim = player.getComponent<CAnimation>();
     switch (action.getActionName()) {
-    case ACTJUMP:
-      player->getComponent<CInput>().jump = false;
-      break;
-    case ACTLEFT:
-      player->getComponent<CInput>().left = false;
-      break;
-    case ACTRIGHT:
-      player->getComponent<CInput>().right = false;
-      break;
+      case ACTJUMP:
+        player.getComponent<CInput>().up = false;
+        break;
+      case ACTLEFT:
+        player.getComponent<CInput>().left = false;
+        if (anim.animation.getName() == ANIMHEROSIDERUN) {
+          auto scale = anim.animation.getSprite().getScale();
+          if (scale.x == -1) {
+            anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+            anim.animation.getSprite().setScale(scale);
+          }
+        }
+        break;
+      case ACTRIGHT:
+        player.getComponent<CInput>().right = false;
+        if (anim.animation.getName() == ANIMHEROSIDERUN) {
+          auto scale = anim.animation.getSprite().getScale();
+          if (scale.x == 1) {
+            anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+            anim.animation.getSprite().setScale(scale);
+          }
+        }
+        break;
     }
   }
 }
-
-void sDebug() {} // only maybe implement
 
 void Scene_Night::update() {
   entities.update(); // First of all update the entities (remove and add)
@@ -338,6 +339,7 @@ void Scene_Night::update() {
     sCollision(); // After movement call collisions to resolve any overlaps
     sSetView(); // After position has been resolved make the camera close in on player
     sAnimation(); // Then call animations (Because of player attack animation)
+    sCoins(); // Check for end through collecting all coins
   }
   sRender(); // After everything render
   currentFrame++;

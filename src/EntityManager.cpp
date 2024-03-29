@@ -46,10 +46,6 @@ const std::vector<Entity>& EntityManager::getEntities(const enum EntityTag tag) 
   return entityMap[tag];
 }
 
-Entity EntityManager::player() {
-  return getEntities(EPLAYER)[0];
-}
-
 void EntityManager::freeAllEntities() {
   for (auto e : entities) {
     e.destroy();

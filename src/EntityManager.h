@@ -20,6 +20,5 @@ public:
   Entity addEntity(const enum EntityTag tag);
   const std::vector<Entity>& getEntities();
   const std::vector<Entity>& getEntities(const enum EntityTag tag);
-  Entity player();
   void freeAllEntities();
 };

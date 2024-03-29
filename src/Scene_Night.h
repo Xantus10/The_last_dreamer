@@ -2,13 +2,14 @@
 #include "Scene.h"
 #include "Physics.h"
 
-struct PlayerConfig { float spawnX, spawnY, BBWidth, BBHeight, speed, jumpSpeed, maxSpeed, gravity; };
+struct PlayerConfigNight { float spawnX, spawnY, BBWidth, BBHeight, speed, jumpSpeed, maxSpeed, gravity; };
 
 class Scene_Night : public Scene {
-  EntityManager entities; // Scene EntityManager
-  PlayerConfig playerConfig;
+  EntityManager entities = EntityManager(); // Scene EntityManager
+  PlayerConfigNight playerConfig;
   sf::View view;
   bool nightmare = false;
+  Entity player = entities.addEntity(EDEFAULT);
 
   void init(); // Initialize
   void loadLevel(); // (Re)Load level

@@ -6,7 +6,7 @@
 #include "Inventory.h"
 
 
-//levelName - name (len<=5), path to level,  leveltypes - M for menu, L for levels, D for dialogues
+//levelName - name (len<=5), path to level,  leveltypes - M for menu, L for levels, D for dialogues, N for night levels
 struct NextLevel { std::string levelName, levelPath; char levelType; };
 
 
@@ -23,8 +23,13 @@ protected:
 public:
   NextLevel nextLevel; // Next level information
 
+  // Nightleak stuff (only for scene_level)
+  std::vector<NextLevel> nightleakNextLevels;
+  int endcode = -1; // Code for different ends of a scene (-1 - normal end, AnythingElse - end through nightleak)
+  //
+
   virtual void update() = 0; //Update the scene (call all systems)
-  virtual void sDoAction(const Action& action) = 0; //The type of argument could change //Interface for excecuting actions sent by GameEngine
+  virtual void sDoAction(const Action& action) = 0; //Interface for excecuting actions sent by GameEngine
   virtual void sRender() = 0; //Render all sprites to window
 
   bool getHasEnded(); // get if the scene ended

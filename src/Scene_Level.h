@@ -5,11 +5,12 @@
 struct PlayerConfig { int rX, rY, X, Y, BBWidth, BBHeight, Health; float speed; };
 
 class Scene_Level : public Scene {
-  EntityManager entities; //Scene's EntityManager
+  EntityManager entities = EntityManager(); //Scene's EntityManager
   PlayerConfig playerConfig;
   sf::View view;
   size_t lastAttackFrame = 0;
   bool cameraIsFollowMode = false;
+  Entity player = entities.addEntity(EDEFAULT);
 
   void init(); // Initialize
   void loadLevel(); // (Re)Load level
