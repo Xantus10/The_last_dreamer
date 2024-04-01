@@ -44,7 +44,8 @@ enum textureName {
 enum soundName {
   SOUNDGOTHIT = 0,
   SOUNDHEARTBEAT = 1,
-  SOUNDHERODEATH = 2
+  SOUNDHERODEATH = 2,
+  SOUNDPICKUP = 3
 };
 
 //Enum of all fonts (prefix FONT)

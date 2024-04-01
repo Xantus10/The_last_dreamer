@@ -77,6 +77,7 @@ void Vec2::change(double aLen, double aAngle) {
 
 void Vec2::normalize() {
   double Len = dist(Vec2(0.0f, 0.0f));
+  if (Len == 0) return;
   x /= Len;
   y /= Len;
 }

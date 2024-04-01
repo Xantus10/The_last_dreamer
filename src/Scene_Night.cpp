@@ -83,6 +83,22 @@ void Scene_Night::loadLevel() {
       e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
       break;
     }
+    case 'M':
+    { // Moving tiles
+      Entity e = entities.addEntity(ETILE);
+      int x2, y2;
+      float speed;
+      levelFile >> x >> y >> x2 >> y2 >> speed;
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTPLATFORM));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
+      Vec2 fpos = gridCoordToXY(x, y, e);
+      Vec2 spos = gridCoordToXY(x2, y2, e);
+      e.addComponent<CTransform>(fpos, Vec2(0, 0), 0);
+      e.addComponent<CPatrolAI>(speed);
+      e.getComponent<CPatrolAI>().patrolPositions.push_back(fpos);
+      e.getComponent<CPatrolAI>().patrolPositions.push_back(spos);
+      break;
+    }
     }
   }
   levelFile.close();
@@ -169,6 +185,16 @@ void Scene_Night::sMovement() {
 
   // Finally update position
   playerTransform.pos += playerTransform.velocity;
+  
+  for (auto t : entities.getEntities(ETILE)) {
+    CPatrolAI& pai = t.getComponent<CPatrolAI>();
+    CTransform& trans = t.getComponent<CTransform>();
+    trans.velocity = pai.nextPosition() - trans.pos;
+    trans.velocity.normalize();
+    trans.velocity *= pai.speed;
+    trans.previousPos = trans.pos;
+    trans.pos += trans.velocity;
+  }
 }
 
 
@@ -193,7 +219,49 @@ void Scene_Night::sCollision() {
       i.destroy();
       if (!nightmare) {
         triggerNightmare();
+      } else {
+        game->getAssets().getSound(SOUNDPICKUP).play();
       }
+    }
+  }
+
+  // Do player + ETILE (First so we can resolve collisions with EBLOCK)
+  for (auto t : entities.getEntities(ETILE)) {
+    if (t.getComponent<CAABB>().blockMovement) {
+      overlap = getOverlap(player, t);
+      // If we are colliding note: We CANNOT do a bit of overlap btwn player and tile
+      if (overlap.x > 0 && overlap.y > 0) {
+        Vec2 prevOverlap = getPreviousOverlap(player, t);
+        // Up/Down
+        if (prevOverlap.x >= 0 && overlap.x > overlap.y) {
+          // From Top
+          if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
+            player.getComponent<CTransform>().pos.y -= overlap.y;
+            // remove airborne
+            player.getComponent<CTransform>().velocity.y = 0;
+            player.getComponent<CInput>().attack = false;
+            // Move player with ETILE (moving tiles functionality (we do not update prevPos))
+            player.getComponent<CTransform>().pos += t.getComponent<CTransform>().velocity;
+          }
+          else { // From bottom
+            player.getComponent<CTransform>().pos.y += overlap.y;
+            // stop at block
+            player.getComponent<CTransform>().velocity.y = 0;
+          } // From left/right
+        }
+        else {
+          // From left
+          if (player.getComponent<CTransform>().pos.x < t.getComponent<CTransform>().pos.x) {
+            player.getComponent<CTransform>().pos.x -= overlap.x;
+          }
+          else { // From right
+            player.getComponent<CTransform>().pos.x += overlap.x;
+          }
+        }
+      }
+    }
+    if (isInside(t.getComponent<CPatrolAI>().nextPosition(), t)) {
+      t.getComponent<CPatrolAI>().incrementPosition();
     }
   }
 
@@ -201,9 +269,9 @@ void Scene_Night::sCollision() {
   for (auto t : entities.getEntities(EBLOCK)) {
     if (t.getComponent<CAABB>().blockMovement) {
       overlap = getOverlap(player, t);
-      Vec2 prevOverlap = getPreviousOverlap(player, t);
       // If we are colliding note: We CANNOT do a bit of overlap btwn player and tile
       if (overlap.x > 0 && overlap.y > 0) {
+        Vec2 prevOverlap = getPreviousOverlap(player, t);
         // Up/Down
         if (prevOverlap.x >= 0 && overlap.x > overlap.y) {
           // From Top
@@ -262,6 +330,12 @@ void Scene_Night::sRender() {
   auto& window = game->getWindow();
   window.clear(sf::Color(3, 3, 35));
   for (auto e : entities.getEntities(EBLOCK)) {
+    if (e.hasComponent<CAnimation>()) {
+      e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+      window.draw(e.getComponent<CAnimation>().animation.getSprite());
+    }
+  }
+  for (auto e : entities.getEntities(ETILE)) {
     if (e.hasComponent<CAnimation>()) {
       e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
       window.draw(e.getComponent<CAnimation>().animation.getSprite());

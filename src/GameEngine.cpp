@@ -5,6 +5,7 @@
 GameEngine::GameEngine() {
   window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Game"/*, sf::Style::Fullscreen */ );
   window.setFramerateLimit(60);
+  window.setMouseCursorVisible(false);
   std::cout << "Begin asset loading...\n";
   initAssets();
   std::cout << "Ended asset loading...\n";

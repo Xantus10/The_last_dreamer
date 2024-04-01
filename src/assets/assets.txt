@@ -65,5 +65,6 @@ A 31 1 0
 S assets/sounds/GotHit.ogg
 S assets/sounds/Heartbeat.ogg
 S assets/sounds/HeroDeathSound.ogg
+S assets/sounds/PickUp.ogg
 F assets/fonts/Anton-Regular.ttf
 F assets/fonts/Inconsolata-Regular.ttf

@@ -636,6 +636,7 @@ void Scene_Level::sCollision() {
   for (auto i : entities.getEntities(EITEM)) {
     overlap = getOverlap(player, i);
     if (overlap.x > 6 && overlap.y > 6) {
+      game->getAssets().getSound(SOUNDPICKUP).play();
       animationName animName = i.getComponent<CAnimation>().animation.getName();
       if (animName == ANIMRING) {
         if (i.getComponent<CAnimation>().animation.getName()) {
@@ -809,7 +810,6 @@ void Scene_Level::sDoAction(const Action& action) {
         spawnSword(player);
       }
       break;
-      
     case ACTQUIT:
       entities.freeAllEntities();
       hasEnded = true;
@@ -819,6 +819,7 @@ void Scene_Level::sDoAction(const Action& action) {
       break;
     case ACTPAUSE:
       paused = !paused;
+      game->getWindow().setMouseCursorVisible(paused);
       break;
     case ACTSELECT:
       cameraIsFollowMode = !cameraIsFollowMode;
