@@ -137,7 +137,7 @@ void Scene_Level::loadLevel() {
 
 Vec2 Scene_Level::getPosition(int aRoomX, int aRoomY, int aEntityX, int aEntityY, Entity e) const {
   // X,Y = multiply room by window width and the individual pos of entity by 64 and add half size; (0,0 is in top left and level is 25 by 14 tiles)
-  return Vec2(aRoomX * WINDOW_WIDTH + aEntityX * DEFAULT_BLOCK_SIZE + e.getComponent<CAABB>().halfSize.x + ((DEFAULT_BLOCK_SIZE - e.getComponent<CAABB>().size.x)/2), aRoomY * WINDOW_HEIGHT + aEntityY * DEFAULT_BLOCK_SIZE + e.getComponent<CAABB>().halfSize.y + ((DEFAULT_BLOCK_SIZE - e.getComponent<CAABB>().size.y) / 2));
+  return Vec2(aRoomX * WINDOW_WIDTH + aEntityX * DEFAULT_BLOCK_SIZE + e.getComponent<CAABB>().halfSize.x + ((DEFAULT_BLOCK_SIZE/2 - e.getComponent<CAABB>().halfSize.x)), aRoomY * WINDOW_HEIGHT + aEntityY * DEFAULT_BLOCK_SIZE + e.getComponent<CAABB>().halfSize.y + ((DEFAULT_BLOCK_SIZE/2 - e.getComponent<CAABB>().halfSize.y)));
 }
 
 Vec2 getRoomNumber(Vec2& pos) {
@@ -609,6 +609,20 @@ void Scene_Level::sCollision() {
           else { // From right
             player.getComponent<CTransform>().pos.x += overlap.x;
           }
+        }
+        float scalex;
+        switch (player.getComponent<CAnimation>().animation.getName()) {
+        case ANIMHEROFACERUN:
+          player.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMHEROFACE);
+          break;
+        case ANIMHEROBACKRUN:
+          player.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMHEROBACK);
+          break;
+        case ANIMHEROSIDERUN:
+          scalex = player.getComponent<CAnimation>().animation.getSprite().getScale().x;
+          player.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+          player.getComponent<CAnimation>().animation.getSprite().setScale(scalex, 1);
+          break;
         }
         player.removeComponent<CInput>();
         player.addComponent<CInput>();

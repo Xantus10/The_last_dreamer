@@ -20,7 +20,7 @@ Vec2 Scene_Night::gridCoordToXY(float gridX, float gridY,Entity e) {
   // Size to get half size
   Vec2& size = e.getComponent<CAABB>().halfSize;
   // X = multiply by 64 and add half size | Y is reversed (0,0 is in bottom left)
-  Vec2 retVec((gridX * 64) + size.x, (WINDOW_HEIGHT - (gridY * 64)) - size.y);
+  Vec2 retVec((gridX * DEFAULT_BLOCK_SIZE) + size.x + (DEFAULT_BLOCK_SIZE/2 - size.x), (WINDOW_HEIGHT - (gridY * DEFAULT_BLOCK_SIZE)) - size.y + (DEFAULT_BLOCK_SIZE/2 - size.y));
   return retVec;
 }
 
@@ -38,7 +38,10 @@ void Scene_Night::loadLevel() {
     // Player
     case 'P':
     {
-      player.destroy();
+      // We check if the entity is really our player (resolves problems when reloading)
+      if (player.isAlive() && player.tag() == EPLAYER) {
+        player.destroy();
+      }
       player = entities.addEntity(EPLAYER);
       levelFile >> playerConfig.spawnX >> playerConfig.spawnY >> playerConfig.BBWidth >> playerConfig.BBHeight
         >> playerConfig.speed >> playerConfig.jumpSpeed >> playerConfig.maxSpeed >> playerConfig.gravity;
@@ -57,7 +60,9 @@ void Scene_Night::loadLevel() {
       Entity e = entities.addEntity(EENEMY);
       levelFile >> x >> y;
       e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTWHEEL));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
       e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
+      e.removeComponent<CAABB>();
       break;
     }
     case 'C':
@@ -80,6 +85,7 @@ void Scene_Night::loadLevel() {
     }
     }
   }
+  levelFile.close();
   entities.update();
 }
 
@@ -199,7 +205,7 @@ void Scene_Night::sCollision() {
       // If we are colliding note: We CANNOT do a bit of overlap btwn player and tile
       if (overlap.x > 0 && overlap.y > 0) {
         // Up/Down
-        if (prevOverlap.x >= 0) {
+        if (prevOverlap.x >= 0 && overlap.x > overlap.y) {
           // From Top
           if (player.getComponent<CTransform>().pos.y < t.getComponent<CTransform>().pos.y) {
             player.getComponent<CTransform>().pos.y -= overlap.y;
@@ -209,6 +215,8 @@ void Scene_Night::sCollision() {
           }
           else { // From bottom
             player.getComponent<CTransform>().pos.y += overlap.y;
+            // stop at block
+            player.getComponent<CTransform>().velocity.y = 0;
           } // From left/right
         }
         else {
@@ -245,9 +253,7 @@ void Scene_Night::sSetView() {
   if (abs(playerTransform.pos.x - viewPos.x) > 50) {
     viewPos.x += playerTransform.velocity.x;
   }
-  if (abs(playerTransform.pos.y - (viewPos.y + WINDOW_HEIGHT / 3)) > 30) {
-    viewPos.y += playerTransform.velocity.y;
-  }
+  viewPos.y = playerTransform.pos.y;
   view.setCenter(viewPos.x, viewPos.y);
   game->getWindow().setView(view);
 }
