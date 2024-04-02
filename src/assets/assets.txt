@@ -30,6 +30,7 @@ T assets/textures/NightCoin.png
 T assets/textures/NightPlatform.png
 T assets/textures/NightWheel.png
 T assets/textures/NightLeak.png
+T assets/textures/HeroJump.png
 A 0 2 18
 A 1 18 2
 A 2 1 0
@@ -62,6 +63,7 @@ A 28 4 22
 A 29 8 8
 A 30 3 10
 A 31 1 0
+A 32 1 0
 S assets/sounds/GotHit.ogg
 S assets/sounds/Heartbeat.ogg
 S assets/sounds/HeroDeathSound.ogg

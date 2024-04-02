@@ -37,7 +37,8 @@ enum textureName {
   TEXNIGHTCOIN = 28,
   TEXNIGHTPLATFORM = 29,
   TEXNIGHTWHEEL = 30,
-  TEXNIGHTLEAK = 31
+  TEXNIGHTLEAK = 31,
+  TEXHEROJUMP = 32
 };
 
 //Enum of all sounds (prefix SOUND)

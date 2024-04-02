@@ -126,6 +126,11 @@ void Scene_Night::sAnimation() {
       }
     }
   }
+  if (player.getComponent<CInput>().attack) {
+    float scalex = player.getComponent<CAnimation>().animation.getSprite().getScale().x;
+    player.getComponent<CAnimation>().animation = game->getAssets().getAnimation(ANIMHEROJUMP);
+    player.getComponent<CAnimation>().animation.getSprite().setScale(scalex, 1);
+  }
 }
 
 char velocityToDirAD(Vec2& vel) {
@@ -143,7 +148,12 @@ void Scene_Night::sMovement() {
 
   if (playerTransform.velocity.x == 0) {
     if (playerInput.left != playerInput.right) {
-      playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
+      if (playerInput.attack) {
+        playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROJUMP);
+      }
+      else {
+        playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
+      }
       if (playerInput.left) {
         playerTransform.velocity.x -= playerConfig.speed;
         playerAnimation.animation.getSprite().setScale(-1, 1);
@@ -240,6 +250,13 @@ void Scene_Night::sCollision() {
             // remove airborne
             player.getComponent<CTransform>().velocity.y = 0;
             player.getComponent<CInput>().attack = false;
+            // Stop jump animation
+            if (player.getComponent<CAnimation>().animation.getName() == ANIMHEROJUMP) {
+              animationName n = (player.getComponent<CInput>().left || player.getComponent<CInput>().right) ? ANIMHEROSIDERUN : ANIMHEROSIDE;
+              float scalex = player.getComponent<CAnimation>().animation.getSprite().getScale().x;
+              player.getComponent<CAnimation>().animation = game->getAssets().getAnimation(n);
+              player.getComponent<CAnimation>().animation.getSprite().setScale(scalex, 1);
+            }
             // Move player with ETILE (moving tiles functionality (we do not update prevPos))
             player.getComponent<CTransform>().pos += t.getComponent<CTransform>().velocity;
           }
@@ -280,6 +297,13 @@ void Scene_Night::sCollision() {
             // remove airborne
             player.getComponent<CTransform>().velocity.y = 0;
             player.getComponent<CInput>().attack = false;
+            // Remove animation
+            if (player.getComponent<CAnimation>().animation.getName() == ANIMHEROJUMP) {
+              animationName n = (player.getComponent<CInput>().left || player.getComponent<CInput>().right) ? ANIMHEROSIDERUN : ANIMHEROSIDE;
+              float scalex = player.getComponent<CAnimation>().animation.getSprite().getScale().x;
+              player.getComponent<CAnimation>().animation = game->getAssets().getAnimation(n);
+              player.getComponent<CAnimation>().animation.getSprite().setScale(scalex, 1);
+            }
           }
           else { // From bottom
             player.getComponent<CTransform>().pos.y += overlap.y;
@@ -418,7 +442,7 @@ void Scene_Night::update() {
     sMovement(); // Call movement first
     sCollision(); // After movement call collisions to resolve any overlaps
     sSetView(); // After position has been resolved make the camera close in on player
-    sAnimation(); // Then call animations (Because of player attack animation)
+    sAnimation(); // Then call animations (Because of player airborne animation)
     sCoins(); // Check for end through collecting all coins
   }
   sRender(); // After everything render
