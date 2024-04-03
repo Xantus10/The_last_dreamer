@@ -23,7 +23,8 @@ class Scene_Night : public Scene {
   void sRender(); // Rendering system
   void sCoins(); // Coins functionality
   void sDoAction(const Action& action);
-  void sSetView();
+  void sSetView(); // Camera system
+  void sInvincibility(); // IFrames system
 public:
   Scene_Night(GameEnginePointer* aGame, const std::string aLevelPath);
   void update();

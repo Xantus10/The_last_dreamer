@@ -29,12 +29,12 @@ Vec2 getPreviousOverlap(Entity e1, Entity e2) {
   return overlapVec;
 }
 
-// Is a point inside entity's AABB
+// Is a point within 5px of entities center
 bool isInside(const Vec2& pos, Entity e) {
   CTransform& eTransform = e.getComponent<CTransform>();
   CAABB& eAABB = e.getComponent<CAABB>();
-  return (pos.x > (eTransform.pos.x - eAABB.halfSize.x) && pos.x < (eTransform.pos.x + eAABB.halfSize.x)) &&
-    (pos.y > (eTransform.pos.y - eAABB.halfSize.y) && pos.y < (eTransform.pos.y + eAABB.halfSize.y));
+  return (pos.x > (eTransform.pos.x - 5) && pos.x < (eTransform.pos.x + 5)) &&
+    (pos.y > (eTransform.pos.y - 5) && pos.y < (eTransform.pos.y + 5));
 }
 
 bool isBetween(const Vec2& pos, Vec2 startpos, Vec2 endpos) {

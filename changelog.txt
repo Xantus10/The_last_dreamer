@@ -11,3 +11,10 @@ Inventory
 Alpha 0.4
 Added Keys+Doors functionality
 Fixed memory leak when creating new levels
+
+Alpha 0.5
+Added Night leaks
+-Colide with them to enter dream realm
+-In dream realm collect all coins to return
+-After returning night leak is gone and there might be something under
+Bugfixes

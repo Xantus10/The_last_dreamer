@@ -47,7 +47,10 @@ void Scene_Level::loadLevel() {
       // Player
     case 'P':
     {
-      player.destroy();
+      // We check if the player wasnt freed already (resolves problems when reloading)
+      if (player.isAlive() && player.tag() == EPLAYER) {
+        player.destroy();
+      }
       player = entities.addEntity(EPLAYER);
       levelFile >> playerConfig.rX >> playerConfig.rY >> playerConfig.X >> playerConfig.Y
         >> playerConfig.BBWidth >> playerConfig.BBHeight >> playerConfig.speed >> playerConfig.Health;

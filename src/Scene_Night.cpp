@@ -32,13 +32,14 @@ void Scene_Night::loadLevel() {
   std::ifstream levelFile(levelPath);
 
   char id = ' ';
-  int x, y;
+  int x, y, x2, y2;
+  float speed;
   while (levelFile >> id) {
     switch (id) {
     // Player
     case 'P':
     {
-      // We check if the entity is really our player (resolves problems when reloading)
+      // We check if the player wasnt freed already (resolves problems when reloading)
       if (player.isAlive() && player.tag() == EPLAYER) {
         player.destroy();
       }
@@ -86,8 +87,6 @@ void Scene_Night::loadLevel() {
     case 'M':
     { // Moving tiles
       Entity e = entities.addEntity(ETILE);
-      int x2, y2;
-      float speed;
       levelFile >> x >> y >> x2 >> y2 >> speed;
       e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTPLATFORM));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
@@ -97,6 +96,21 @@ void Scene_Night::loadLevel() {
       e.addComponent<CPatrolAI>(speed);
       e.getComponent<CPatrolAI>().patrolPositions.push_back(fpos);
       e.getComponent<CPatrolAI>().patrolPositions.push_back(spos);
+      break;
+    }
+    case 'N':
+    { // Moving wheels
+      Entity e = entities.addEntity(ESWORD);
+      levelFile >> x >> y >> x2 >> y2 >> speed;
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTWHEEL));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
+      Vec2 fpos = gridCoordToXY(x, y, e);
+      Vec2 spos = gridCoordToXY(x2, y2, e);
+      e.addComponent<CTransform>(fpos, Vec2(0, 0), 0);
+      e.addComponent<CPatrolAI>(speed);
+      e.getComponent<CPatrolAI>().patrolPositions.push_back(fpos);
+      e.getComponent<CPatrolAI>().patrolPositions.push_back(spos);
+      e.removeComponent<CAABB>();
       break;
     }
     }
@@ -109,6 +123,9 @@ void Scene_Night::loadLevel() {
 void Scene_Night::triggerNightmare() {
   nightmare = true;
   for (auto e : entities.getEntities(EENEMY)) {
+    e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
+  }
+  for (auto e : entities.getEntities(ESWORD)) {
     e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
   }
 }
@@ -196,6 +213,7 @@ void Scene_Night::sMovement() {
   // Finally update position
   playerTransform.pos += playerTransform.velocity;
   
+  // Moving tiles
   for (auto t : entities.getEntities(ETILE)) {
     CPatrolAI& pai = t.getComponent<CPatrolAI>();
     CTransform& trans = t.getComponent<CTransform>();
@@ -204,6 +222,31 @@ void Scene_Night::sMovement() {
     trans.velocity *= pai.speed;
     trans.previousPos = trans.pos;
     trans.pos += trans.velocity;
+  }
+  // Moving wheels
+  for (auto t : entities.getEntities(ESWORD)) {
+    if (!t.hasComponent<CInvincibility>()) {
+      CPatrolAI& pai = t.getComponent<CPatrolAI>();
+      CTransform& trans = t.getComponent<CTransform>();
+      trans.velocity = pai.nextPosition() - trans.pos;
+      trans.velocity.normalize();
+      trans.velocity *= pai.speed;
+      trans.previousPos = trans.pos;
+      trans.pos += trans.velocity;
+    }
+  }
+}
+
+
+void Scene_Night::sInvincibility() {
+  // Just for ESWORD, bcs nothing else has it
+  for (auto e : entities.getEntities(ESWORD)) {
+    if (e.hasComponent<CInvincibility>()) {
+      e.getComponent<CInvincibility>().iframes--;
+      if (e.getComponent<CInvincibility>().iframes == 0) {
+        e.removeComponent<CInvincibility>();
+      }
+    }
   }
 }
 
@@ -218,6 +261,21 @@ void Scene_Night::sCollision() {
     // 10 bcs we give some breathing room for hero
     if (overlap.x > 10 && overlap.y > 10) {
       died = true;
+    }
+  }
+  
+  // Moving enemies
+  for (auto e : entities.getEntities(ESWORD)) {
+    // Player + enemy
+    overlap = getOverlap(e, player);
+    // 10 bcs we give some breathing room for hero
+    if (overlap.x > 10 && overlap.y > 10) {
+      died = true;
+    }
+    if (isInside(e.getComponent<CPatrolAI>().nextPosition(), e)) {
+      e.getComponent<CPatrolAI>().incrementPosition();
+      // We stand in place for 2 sec
+      e.addComponent<CInvincibility>(90);
     }
   }
 
@@ -378,6 +436,12 @@ void Scene_Night::sRender() {
         window.draw(e.getComponent<CAnimation>().animation.getSprite());
       }
     }
+    for (auto e : entities.getEntities(ESWORD)) {
+      if (e.hasComponent<CAnimation>()) {
+        e.getComponent<CAnimation>().animation.getSprite().setPosition(e.getComponent<CTransform>().pos.x, e.getComponent<CTransform>().pos.y);
+        window.draw(e.getComponent<CAnimation>().animation.getSprite());
+      }
+    }
   }
   for (auto e : entities.getEntities(EPLAYER)) {
     if (e.hasComponent<CAnimation>()) {
@@ -444,6 +508,7 @@ void Scene_Night::update() {
     sSetView(); // After position has been resolved make the camera close in on player
     sAnimation(); // Then call animations (Because of player airborne animation)
     sCoins(); // Check for end through collecting all coins
+    sInvincibility(); // Update CInvincibility for ESWORD
   }
   sRender(); // After everything render
   currentFrame++;
