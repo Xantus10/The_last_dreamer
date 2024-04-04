@@ -17,4 +17,9 @@ Added Night leaks
 -Colide with them to enter dream realm
 -In dream realm collect all coins to return
 -After returning night leak is gone and there might be something under
+Small bugfixes
+
+Alpha 0.5.1
 Bugfixes
+-Bug for camera view when riding moving platforms
+-Bug for getting to night level instead of other scenes, when entering finish

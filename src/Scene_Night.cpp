@@ -163,25 +163,22 @@ void Scene_Night::sMovement() {
   auto& playerAnimation = player.getComponent<CAnimation>();
   playerTransform.previousPos = playerTransform.pos;
 
-  if (playerTransform.velocity.x == 0) {
-    if (playerInput.left != playerInput.right) {
-      if (playerInput.attack) {
-        playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROJUMP);
-      }
-      else {
-        playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
-      }
-      if (playerInput.left) {
-        playerTransform.velocity.x -= playerConfig.speed;
-        playerAnimation.animation.getSprite().setScale(-1, 1);
-      }
-      else {
-        playerTransform.velocity.x += playerConfig.speed;
-        playerAnimation.animation.getSprite().setScale(1, 1);
-      }
+  playerTransform.velocity.x = 0;
+
+  if (playerInput.left != playerInput.right) {
+    if (playerInput.attack) {
+      playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROJUMP);
+    } else if (playerAnimation.animation.getName() == ANIMHEROSIDE) {
+      playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
     }
-  }
-  else {
+    if (playerInput.left) {
+      playerTransform.velocity.x = -playerConfig.speed;
+      playerAnimation.animation.getSprite().setScale(-1, 1);
+    } else {
+      playerTransform.velocity.x = playerConfig.speed;
+      playerAnimation.animation.getSprite().setScale(1, 1);
+    }
+  } else {
     switch (velocityToDirAD(playerTransform.velocity)) {
     case 'a':
       if (!playerInput.left) {
@@ -317,6 +314,7 @@ void Scene_Night::sCollision() {
             }
             // Move player with ETILE (moving tiles functionality (we do not update prevPos))
             player.getComponent<CTransform>().pos += t.getComponent<CTransform>().velocity;
+            player.getComponent<CTransform>().velocity += t.getComponent<CTransform>().velocity;
           }
           else { // From bottom
             player.getComponent<CTransform>().pos.y += overlap.y;

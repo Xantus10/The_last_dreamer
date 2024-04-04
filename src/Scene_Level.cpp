@@ -532,7 +532,8 @@ void Scene_Level::sCollision() {
           t.destroy();
           player.getComponent<CHP>().currentHp = player.getComponent<CHP>().maxHp;
           heroInventory->getEquipped().currentHp = heroInventory->getEquipped().maxHp;
-        } else if (t.getComponent<CAnimation>().animation.getName() == ANIMFINISH) {
+        } else if (t.getComponent<CAnimation>().animation.getName() == ANIMFINISH) { // Priority check for finish
+          endcode = -1;
           hasEnded = true;
         } else {
           // Up/Down
