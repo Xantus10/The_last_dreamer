@@ -9,10 +9,11 @@ class Scene_Menu : public Scene {
 
   void init();
   void initInventory();
-  void update();
+  void readGameSave();
+  void sRender();
 
   void sDoAction(const Action& action);
 public:
   Scene_Menu(GameEnginePointer* game, std::string path);
-  void sRender();
+  void update();
 };

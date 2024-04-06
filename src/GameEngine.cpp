@@ -45,7 +45,7 @@ void GameEngine::initAssets() {
       break;
     case 'M':
       assetsfile >> assetfilename;
-      assets.addSound((soundName)musicCount, assetfilename);
+      assets.addMusic((musicName)musicCount, assetfilename);
       musicCount++;
       break;
     case 'F':
@@ -85,6 +85,8 @@ void GameEngine::run() {
         } else {
           bool endCur = (scenesMap[currentScene]->getId() != 'M');
           if (scenesMap[currentScene]->nextLevel.levelType == 'L') {
+            // Save the level
+            saveGameState(scenesMap[currentScene]->nextLevel.levelPath);
             changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Level>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
           } else if (scenesMap[currentScene]->nextLevel.levelType == 'D') {
             changeScene(scenesMap[currentScene]->nextLevel.levelName, std::make_shared<Scene_Dialogue>(this, scenesMap[currentScene]->nextLevel.levelPath), endCur);
@@ -95,6 +97,21 @@ void GameEngine::run() {
   }
 }
 
+void GameEngine::saveGameState(std::string path) {
+  std::ofstream saveFile("./assets/game_files/data/save.txt");
+  // Write path to level
+  saveFile << path << "\n";
+  
+  std::shared_ptr<Inventory> inv = getCurrentScene()->getInventory();
+  Ring r = inv->getEquipped();
+  saveFile << r.damage << " " << r.currentHp << " " << r.maxHp << "\n";
+  for (int i = 0; i < INVENTORY_SIZE; i++) {
+    r = inv->getInventoryAtIx(i);
+    saveFile << r.damage << " " << r.currentHp << " " << r.maxHp << "\n";
+  }
+  saveFile.close();
+}
+
 void GameEngine::quit() {
   window.close();
   running = false;
@@ -103,7 +120,7 @@ void GameEngine::quit() {
 void GameEngine::changeScene(std::string aSceneId, bool endCurrentScene) {
   if (endCurrentScene) scenesMap.erase(currentScene);
   currentScene = aSceneId;
-  scenesMap[currentScene]->notEnd(); // note: no need to set inv here, as any scene should already have ptr to it
+  scenesMap[currentScene]->notEnd(); // note: no need to set inv here, as any scene should already have ptr to it (For now we are resetting only in Scene Menu)
 }
 
 void GameEngine::changeScene(std::string aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene) {

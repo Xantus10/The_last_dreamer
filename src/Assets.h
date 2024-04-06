@@ -57,7 +57,8 @@ enum fontName {
 
 // Enum of all music (prefix MUSIC)
 enum musicName {
-
+  MUSICDREAM = 0,
+  MUSICNIGHTMARE = 1
 };
 
 //Assets manager

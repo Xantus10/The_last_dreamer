@@ -70,3 +70,5 @@ S assets/sounds/HeroDeathSound.ogg
 S assets/sounds/PickUp.ogg
 F assets/fonts/Anton-Regular.ttf
 F assets/fonts/Inconsolata-Regular.ttf
+M assets/music/Dream.ogg
+M assets/music/Nightmare.ogg

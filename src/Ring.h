@@ -11,6 +11,7 @@ public:
 
   Ring();
   Ring(uint16_t aDamage, uint16_t aHp);
+  Ring(uint16_t aDamage, uint16_t aCurHp, uint16_t aMaxHp);
 
   std::string getPrintableInfo();
 };

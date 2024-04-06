@@ -9,6 +9,8 @@ Scene_Night::Scene_Night(GameEnginePointer* aGame, const std::string aLevelPath)
 
 // Register actions and call loadLevel()
 void Scene_Night::init() {
+  game->getAssets().getMusic(MUSICDREAM).setLoop(true);
+  game->getAssets().getMusic(MUSICDREAM).play();
   registerAction(sf::Keyboard::W, ACTJUMP);
   registerAction(sf::Keyboard::A, ACTLEFT);
   registerAction(sf::Keyboard::D, ACTRIGHT);
@@ -128,6 +130,9 @@ void Scene_Night::triggerNightmare() {
   for (auto e : entities.getEntities(ESWORD)) {
     e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
   }
+  game->getAssets().getMusic(MUSICDREAM).stop();
+  game->getAssets().getMusic(MUSICNIGHTMARE).setLoop(true);
+  game->getAssets().getMusic(MUSICNIGHTMARE).play();
 }
 
 void Scene_Night::sAnimation() {
@@ -391,6 +396,7 @@ void Scene_Night::sCoins() {
   if (entities.getEntities(EITEM).size() == 0) {
     hasEnded = true;
     entities.freeAllEntities();
+    game->getAssets().getMusic(MUSICNIGHTMARE).stop();
   }
 }
 

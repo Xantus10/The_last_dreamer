@@ -27,6 +27,19 @@ void Scene_Menu::initInventory() {
   heroInventory->giveIntoInventory(Ring(4, 4));
 }
 
+void Scene_Menu::readGameSave() {
+  std::ifstream saveFile("./assets/game_files/data/save.txt");
+
+  saveFile >> nextLevel.levelPath;
+
+  heroInventory = std::make_shared<Inventory>();
+  int dmg, cur, max;
+  for (int i = 0; i < INVENTORY_SIZE + 1; i++) {
+    saveFile >> dmg >> cur >> max;
+    heroInventory->giveIntoInventory(Ring(dmg, cur, max));
+  }
+}
+
 void Scene_Menu::update() {
   game->getWindow().setView(game->getWindow().getDefaultView());
   if (menuIndex < 0) {
@@ -50,12 +63,15 @@ void Scene_Menu::sDoAction(const Action& action) {
     case ACTDOWN:
       menuIndex += 1;
       break;
-    case ACTSELECT:
+    case ACTSELECT: // We can consider doing all those hasEnded at the end :)
       if (menuIndex == 0) {
         initInventory();
         hasEnded = true;
       } else if (menuIndex == 1) {
-        // After save states read save file and set inventory and nextLevel
+        readGameSave();
+        nextLevel.levelName = "CONT";
+        nextLevel.levelType = 'L';
+        hasEnded = true;
       } else {
         hasEnded = true;
         game->quit();

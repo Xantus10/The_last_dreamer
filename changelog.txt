@@ -23,3 +23,7 @@ Alpha 0.5.1
 Bugfixes
 -Bug for camera view when riding moving platforms
 -Bug for getting to night level instead of other scenes, when entering finish
+
+Alpha 0.6
+Added Saving functionality (autosave every level and return using Continue option in menu)
+Added music for Night leak sequences
