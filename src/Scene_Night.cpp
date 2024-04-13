@@ -4,7 +4,6 @@
 
 Scene_Night::Scene_Night(GameEnginePointer* aGame, const std::string aLevelPath)
   : Scene(aGame, aLevelPath, 'L') {
-  init();
 }
 
 // Register actions and call loadLevel()

@@ -11,7 +11,6 @@ class Scene_Night : public Scene {
   bool nightmare = false;
   Entity player = entities.addEntity(EDEFAULT);
 
-  void init(); // Initialize
   void loadLevel(); // (Re)Load level
 
   void triggerNightmare();
@@ -26,6 +25,7 @@ class Scene_Night : public Scene {
   void sSetView(); // Camera system
   void sInvincibility(); // IFrames system
 public:
+  void init(); // Initialize
   Scene_Night(GameEnginePointer* aGame, const std::string aLevelPath);
   void update();
 };

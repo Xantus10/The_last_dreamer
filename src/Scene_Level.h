@@ -12,7 +12,6 @@ class Scene_Level : public Scene {
   bool cameraIsFollowMode = false;
   Entity player = entities.addEntity(EDEFAULT);
 
-  void init(); // Initialize
   void loadLevel(); // (Re)Load level
 
   Vec2 getPosition(int aRoomX, int aRoomY, int aEntityX, int aEntityY, Entity e) const; // Return the x, y pos of middle of entity
@@ -28,6 +27,7 @@ class Scene_Level : public Scene {
   void sInventory(); // System for showing inventory (only when paused)
   void sDoAction(const Action& action);
 public:
+  void init(); // Initialize
   Scene_Level(GameEnginePointer* aGame, const std::string aLevelPath);
   void update();
 };

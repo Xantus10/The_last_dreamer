@@ -36,7 +36,8 @@ enum animationName {
   ANIMNIGHTPLATFORM = 29,
   ANIMNIGHTWHEEL = 30,
   ANIMNIGHTLEAK = 31,
-  ANIMHEROJUMP = 32
+  ANIMHEROJUMP = 32,
+  ANIMBOOTS = 33
 };
 
 //Animation functionality

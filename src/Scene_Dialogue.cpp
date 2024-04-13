@@ -86,7 +86,6 @@ void Scene_Dialogue::sDoAction(const Action& action) {
 
 Scene_Dialogue::Scene_Dialogue(GameEnginePointer* aGame, std::string& aPath)
   : Scene(aGame, aPath, 'I') {
-  init();
 }
 
 void Scene_Dialogue::update() {

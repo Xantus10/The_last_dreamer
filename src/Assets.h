@@ -4,6 +4,11 @@
 #include "Animation.h"
 #include <SFML/Audio.hpp>
 
+#define TEXTURE_COUNT 33
+#define SOUND_COUNT 4
+#define FONT_COUNT 2
+#define MUSIC_COUNT 2
+
 //Enum of all textures (prefix TEX) (they correspond to animations)
 enum textureName {
   TEXENEMYBASIC = 0,
@@ -38,7 +43,8 @@ enum textureName {
   TEXNIGHTPLATFORM = 29,
   TEXNIGHTWHEEL = 30,
   TEXNIGHTLEAK = 31,
-  TEXHEROJUMP = 32
+  TEXHEROJUMP = 32,
+  TEXBOOTS = 33
 };
 
 //Enum of all sounds (prefix SOUND)

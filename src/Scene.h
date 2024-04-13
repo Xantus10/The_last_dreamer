@@ -31,6 +31,7 @@ public:
   virtual void update() = 0; //Update the scene (call all systems)
   virtual void sDoAction(const Action& action) = 0; //Interface for excecuting actions sent by GameEngine
   virtual void sRender() = 0; //Render all sprites to window
+  virtual void init() = 0; //Initialize
 
   bool getHasEnded(); // get if the scene ended
   void notEnd();

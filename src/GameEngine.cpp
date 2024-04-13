@@ -3,7 +3,7 @@
 #include <iostream>
 
 GameEngine::GameEngine() {
-  window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Game"/*, sf::Style::Fullscreen */ );
+  window.create(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Game"/*, sf::Style::Fullscreen*/);
   window.setFramerateLimit(60);
   window.setMouseCursorVisible(false);
   std::cout << "Begin asset loading...\n";
@@ -11,6 +11,7 @@ GameEngine::GameEngine() {
   std::cout << "Ended asset loading...\n";
   initScene();
   std::cout << "Ended menu initialization...\n";
+  loadSettings();
 }
 
 void GameEngine::initAssets() {
@@ -60,6 +61,24 @@ void GameEngine::initAssets() {
 void GameEngine::initScene() {
   scenesMap["Menu"] = std::make_shared<Scene_Menu>(this, "./assets/game_files/levels/menu.txt");
   currentScene = "Menu";
+  scenesMap[currentScene]->init();
+}
+
+void GameEngine::saveSettings() {
+  std::ofstream outFile("./assets/game_files/data/settings.txt");
+
+  outFile << settings.soundVolume << " " << settings.musicVolume;
+
+  outFile.close();
+}
+
+void GameEngine::loadSettings() {
+  std::ifstream inpFile("./assets/game_files/data/settings.txt");
+
+  inpFile >> settings.soundVolume >> settings.musicVolume;
+
+  inpFile.close();
+  updateSettings();
 }
 
 std::shared_ptr<Scene> GameEngine::getCurrentScene() {
@@ -93,7 +112,17 @@ void GameEngine::run() {
           }
         }
       }
+      saveSettings();
     }
+  }
+}
+
+void GameEngine::updateSettings() {
+  for (int i = 0; i < SOUND_COUNT; i++) {
+    assets.getSound((soundName)i).setVolume(10 * settings.soundVolume);
+  }
+  for (int i = 0; i < MUSIC_COUNT; i++) {
+    assets.getMusic((musicName)i).setVolume(10 * settings.musicVolume);
   }
 }
 
@@ -109,6 +138,8 @@ void GameEngine::saveGameState(std::string path) {
     r = inv->getInventoryAtIx(i);
     saveFile << r.damage << " " << r.currentHp << " " << r.maxHp << "\n";
   }
+
+  saveFile << inv->getBootsSpd() << "\n";
   saveFile.close();
 }
 
@@ -129,6 +160,7 @@ void GameEngine::changeScene(std::string aSceneId, std::shared_ptr<Scene> aScene
   if (endCurrentScene) scenesMap.erase(currentScene);
   currentScene = aSceneId;
   scenesMap[currentScene]->setInventory(tmpInv);
+  scenesMap[currentScene]->init();
 }
 
 Assets& GameEngine::getAssets() {

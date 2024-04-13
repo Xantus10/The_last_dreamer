@@ -21,11 +21,14 @@ class GameEngine : public GameEnginePointer {
   void changeScene(std::string aSceneId, bool endCurrentScene = true);
   void changeScene(std::string aSceneId, std::shared_ptr<Scene> aScenePtr, bool endCurrentScene = true);
   void saveGameState(std::string path);
+  void saveSettings();
+  void loadSettings();
 public:
   GameEngine();
   void run();
   void quit();
   Assets& getAssets();
   sf::RenderWindow& getWindow();
+  void updateSettings();
   void sUserInput(); //Construct action objects based on the input
 };

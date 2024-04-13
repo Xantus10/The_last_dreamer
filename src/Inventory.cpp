@@ -14,6 +14,17 @@ Ring& Inventory::getInventoryAtIx(int ix) {
   return inventory[ix];
 }
 
+int Inventory::getBootsLvl() {
+  return (int) (bootsspd * 2);
+}
+
+float Inventory::getBootsSpd() {
+  return bootsspd;
+}
+
+void Inventory::addBoots(float val) {
+  bootsspd += val;
+}
 
 void Inventory::giveIntoInventory(Ring aNewRing) {
   if (equipped.maxHp == 0 && equipped.damage == 0) {

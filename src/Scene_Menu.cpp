@@ -3,20 +3,52 @@
 void Scene_Menu::init() {
   registerAction(sf::Keyboard::W, ACTUP);
   registerAction(sf::Keyboard::S, ACTDOWN);
+  registerAction(sf::Keyboard::A, ACTLEFT);
+  registerAction(sf::Keyboard::D, ACTRIGHT);
   registerAction(sf::Keyboard::Space, ACTSELECT);
   std::ifstream fin(levelPath);
   fin >> nextLevel.levelName >> nextLevel.levelPath >> nextLevel.levelType;
+  menuTextsInit();
+}
+
+
+void Scene_Menu::menuTextsInit() {
+  menuStrings.clear();
+  menuTexts.clear();
   menuStrings.push_back("NEW GAME");
   menuStrings.push_back("CONTINUE");
+  menuStrings.push_back("SETTINGS");
   menuStrings.push_back("QUIT");
   sf::Font& font = game->getAssets().getFont(FONTANTONREG);
+  helpText = sf::Text("W - up    S - down    Space - select", font, 20);
+  helpText.setFillColor(sf::Color(30, 30, 30));
+  helpText.setPosition(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 40);
   for (int i = 0; i < menuStrings.size(); i++) {
     sf::Text t = sf::Text(menuStrings[i], font, 40);
-    t.setFillColor(sf::Color(30, 30, 30));
-    t.setPosition(600, 200+i*90);
+    t.setFillColor(sf::Color(50, 50, 50));
+    t.setPosition(600, 200 + i * 90);
     menuTexts.push_back(t);
   }
 }
+
+void Scene_Menu::settingsTextsInit() {
+  menuStrings.clear();
+  menuTexts.clear();
+  menuStrings.push_back("SOUNDS VOLUME");
+  menuStrings.push_back("MUSIC VOLUME");
+  menuStrings.push_back("GO BACK");
+  sf::Font& font = game->getAssets().getFont(FONTANTONREG);
+  helpText = sf::Text("W - up    S - down    Space - select/play    A - increase    D - decrease", font, 20);
+  helpText.setFillColor(sf::Color(30, 30, 30));
+  helpText.setPosition(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 40);
+  for (int i = 0; i < menuStrings.size(); i++) {
+    sf::Text t = sf::Text(menuStrings[i], font, 40);
+    t.setFillColor(sf::Color(50, 50, 50));
+    t.setPosition(600, 200 + i * 90);
+    menuTexts.push_back(t);
+  }
+}
+
 
 void Scene_Menu::initInventory() {
   // As the menu is the first scene, we create inventory here
@@ -38,6 +70,10 @@ void Scene_Menu::readGameSave() {
     saveFile >> dmg >> cur >> max;
     heroInventory->giveIntoInventory(Ring(dmg, cur, max));
   }
+
+  float boots;
+  saveFile >> boots;
+  heroInventory->addBoots(boots);
 }
 
 void Scene_Menu::update() {
@@ -63,18 +99,64 @@ void Scene_Menu::sDoAction(const Action& action) {
     case ACTDOWN:
       menuIndex += 1;
       break;
-    case ACTSELECT: // We can consider doing all those hasEnded at the end :)
-      if (menuIndex == 0) {
-        initInventory();
-        hasEnded = true;
-      } else if (menuIndex == 1) {
-        readGameSave();
-        nextLevel.levelName = "CONT";
-        nextLevel.levelType = 'L';
-        hasEnded = true;
+    case ACTSELECT:
+      if (inSettings) {
+        switch (menuIndex) {
+          case 0:
+            game->getAssets().getSound(SOUNDPICKUP).play();
+            break;
+          case 1:
+            game->getAssets().getMusic(MUSICDREAM).play();
+            Sleep(3000);
+            game->getAssets().getMusic(MUSICDREAM).stop();
+            break;
+          default:
+            inSettings = false;
+            menuTextsInit();
+            break;
+        }
       } else {
-        hasEnded = true;
-        game->quit();
+        switch (menuIndex) {
+          case 0:
+            initInventory();
+            hasEnded = true;
+            break;
+          case 1:
+            readGameSave();
+            nextLevel.levelName = "CONT";
+            nextLevel.levelType = 'L';
+            hasEnded = true;
+            break;
+          case 2:
+            inSettings = true;
+            settingsTextsInit();
+            break;
+          default:
+            hasEnded = true;
+            game->quit();
+            break;
+        }
+      }
+      break;
+    case ACTLEFT:
+      if (inSettings) {
+        if (menuIndex == 0) {
+          game->settings.soundVolume = (game->settings.soundVolume == 0) ? 0 : game->settings.soundVolume - 1;
+        } else if (menuIndex == 1) {
+          game->settings.musicVolume = (game->settings.musicVolume == 0) ? 0 : game->settings.musicVolume - 1;
+        }
+        game->updateSettings();
+      }
+      break;
+    case ACTRIGHT:
+      if (inSettings) {
+        if (menuIndex == 0) {
+          game->settings.soundVolume = (game->settings.soundVolume == 10) ? 10 : game->settings.soundVolume + 1;
+        }
+        else if (menuIndex == 1) {
+          game->settings.musicVolume = (game->settings.musicVolume == 10) ? 10 : game->settings.musicVolume + 1;
+        }
+        game->updateSettings();
       }
       break;
     }
@@ -85,13 +167,25 @@ void Scene_Menu::sDoAction(const Action& action) {
 Scene_Menu::Scene_Menu(GameEnginePointer* game, std::string path)
   : Scene(game, path, 'M')
   , menuIndex(0) {
-  init();
 }
 
 void Scene_Menu::sRender() {
-  game->getWindow().clear();
+  sf::RenderWindow& window = game->getWindow();
+  window.clear();
   for (auto t : menuTexts) {
-    game->getWindow().draw(t);
+    window.draw(t);
   }
-  game->getWindow().display();
+  if (inSettings) {
+    sf::Font& font = game->getAssets().getFont(FONTANTONREG);
+    sf::Text vol = sf::Text(std::to_string(game->settings.soundVolume), font, 40);
+    vol.setFillColor(sf::Color(30, 30, 30));
+    vol.setPosition(900, 200);
+    window.draw(vol);
+    vol = sf::Text(std::to_string(game->settings.musicVolume), font, 40);
+    vol.setFillColor(sf::Color(30, 30, 30));
+    vol.setPosition(900, 290);
+    window.draw(vol);
+  }
+  window.draw(helpText);
+  window.display();
 }

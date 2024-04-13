@@ -2,9 +2,10 @@
 #include <fstream>
 #include <iostream>
 
+#define SWORD_CD 12
+
 Scene_Level::Scene_Level(GameEnginePointer* aGame, const std::string aLevelPath)
   : Scene(aGame, aLevelPath, 'L') {
-  init();
 }
 // Register actions and call loadLevel()
 void Scene_Level::init() {
@@ -54,6 +55,7 @@ void Scene_Level::loadLevel() {
       player = entities.addEntity(EPLAYER);
       levelFile >> playerConfig.rX >> playerConfig.rY >> playerConfig.X >> playerConfig.Y
         >> playerConfig.BBWidth >> playerConfig.BBHeight >> playerConfig.speed >> playerConfig.Health;
+      playerConfig.speed += heroInventory->getBootsSpd();
       player.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMHEROFACE));
       player.addComponent<CAABB>(Vec2(playerConfig.BBWidth, playerConfig.BBHeight));
       player.addComponent<CTransform>(getPosition(playerConfig.rX, playerConfig.rY, playerConfig.X, playerConfig.Y, player), Vec2(0, 0), playerConfig.speed);
@@ -108,6 +110,15 @@ void Scene_Level::loadLevel() {
       Entity e = entities.addEntity(EITEM);
       levelFile >> aName >> rX >> rY >> x >> y;
       e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
+      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
+      e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
+      break;
+    }
+    case 'S':
+    {
+      Entity e = entities.addEntity(EITEM);
+      levelFile >> rX >> rY >> x >> y;
+      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMBOOTS));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
       e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
       break;
@@ -192,7 +203,7 @@ void Scene_Level::spawnSword(Entity e) {
       break;
   }
   sword.addComponent<CTransform>(e.getComponent<CTransform>().pos + posShift, Vec2(0, 0), 0);
-  sword.addComponent<CLifespan>(20); // Maybe remove
+  sword.addComponent<CLifespan>(SWORD_CD);
   sword.addComponent<CDamage>(1);
 
   sword.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
@@ -214,7 +225,7 @@ void Scene_Level::sAnimation() {
 
   // Timer for player attack animation is handeled here (Use CInput.attack for info on attacking)
   if (player.getComponent<CInput>().attack) {
-    if (player.getComponent<CAnimation>().animation.getTotalFramesOfAnimationRan() > 18) {
+    if (player.getComponent<CAnimation>().animation.getTotalFramesOfAnimationRan() > SWORD_CD) {
       player.getComponent<CInput>().attack = false;
     }
   }
@@ -407,7 +418,7 @@ void Scene_Level::sCollision() {
             if (e.hasComponent<CFollowAI>()) { e.getComponent<CFollowAI>().speed = 0; }
             else { e.getComponent<CPatrolAI>().speed = 0; }
           } else {
-            e.addComponent<CInvincibility>(22);
+            e.addComponent<CInvincibility>(SWORD_CD + 2);
           }
         }
       }
@@ -636,18 +647,21 @@ void Scene_Level::sCollision() {
       }
     }
   }
-  // Player + Items (Ring/Key)
+  // Player + Items (Ring/Key/Boots)
   for (auto i : entities.getEntities(EITEM)) {
     overlap = getOverlap(player, i);
     if (overlap.x > 6 && overlap.y > 6) {
       game->getAssets().getSound(SOUNDPICKUP).play();
       animationName animName = i.getComponent<CAnimation>().animation.getName();
       if (animName == ANIMRING) {
-        if (i.getComponent<CAnimation>().animation.getName()) {
+        if (heroInventory->getEmptySpaceIx() != -1) {
           Ring ring(i.getComponent<CDamage>().damage, i.getComponent<CHP>().maxHp);
           i.destroy();
           heroInventory->giveIntoInventory(ring);
         }
+      } else if (animName == ANIMBOOTS) {
+        heroInventory->addBoots(0.5);
+        i.destroy();
       } else { // Keys
         i.removeComponent<CAABB>();
         // Opaticity to 0
@@ -770,25 +784,35 @@ void Scene_Level::sInventory() {
   // Draw ---Equipped---
   helpText = sf::Text("---Equipped---", font);
   helpText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
-  helpText.setPosition(center.x, center.y - 100);
+  helpText.setPosition(center.x, center.y - 150);
   window.draw(helpText);
   // Draw equipped item stats
   statText = sf::Text(heroInventory->getEquipped().getPrintableInfo(), font);
   statText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
-  statText.setPosition(center.x, center.y - 50);
+  statText.setPosition(center.x, center.y - 100);
   window.draw(statText);
   // Draw ---Inventory---
   helpText = sf::Text("---Inventory---", font);
   helpText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
-  helpText.setPosition(center.x, center.y);
+  helpText.setPosition(center.x, center.y -50);
   window.draw(helpText);
   // Draw inventory item stats
   for (int i = 0; i < INVENTORY_SIZE; i++) {
     statText = sf::Text(heroInventory->getInventoryAtIx(i).getPrintableInfo(), font);
     statText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
-    statText.setPosition(center.x, center.y + 50*(i+1));
+    statText.setPosition(center.x, center.y + 50*(i));
     window.draw(statText);
   }
+  // Draw ---Boots---
+  helpText = sf::Text("---Inventory---", font);
+  helpText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
+  helpText.setPosition(center.x, center.y + 50*INVENTORY_SIZE);
+  window.draw(helpText);
+  // Draw Boots value
+  helpText = sf::Text("Boots level: " + std::to_string(heroInventory->getBootsLvl()), font);
+  helpText.setOrigin(helpText.getLocalBounds().width / 2.0f, helpText.getLocalBounds().height / 2.0f);
+  helpText.setPosition(center.x, center.y + 50*(INVENTORY_SIZE+1));
+  window.draw(helpText);
   window.display();
 }
 
@@ -808,7 +832,7 @@ void Scene_Level::sDoAction(const Action& action) {
       player.getComponent<CInput>().down = true;
       break;
     case ACTATTACK:
-      if (!player.getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > 20 && !paused) {
+      if (!player.getComponent<CInput>().attack && (currentFrame - lastAttackFrame) > SWORD_CD && !paused) {
         player.getComponent<CInput>().attack = true;
         lastAttackFrame = currentFrame;
         spawnSword(player);
@@ -867,7 +891,7 @@ void Scene_Level::sDoAction(const Action& action) {
   } else if (action.getActionType() == ACTMOUSEDOWN && paused) {
     Vec2 center(WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
     for (int i=0; i < INVENTORY_SIZE; i++) {
-      if (isBetween(Vec2(action.getEvent()->mouseButton.x, action.getEvent()->mouseButton.y), center + Vec2(-160, (i + 1) * 50 - 20), center + Vec2(160, (i + 2) * 50 - 20))) {
+      if (isBetween(Vec2(action.getEvent()->mouseButton.x, action.getEvent()->mouseButton.y), center + Vec2(-160, (i) * 50 - 20), center + Vec2(160, (i + 1) * 50 - 20))) {
         heroInventory->equip(i);
       }
     }
