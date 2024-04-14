@@ -32,6 +32,7 @@ void Scene_Level::loadLevel() {
   int aName;
   int rX, rY, x, y;
   bool mb, vb;
+  int bonusHp = (game->difficulty == DIFFHARD) ? 2 : 0;
   while (levelFile >> id) {
     switch (id) {
       // Textures
@@ -76,7 +77,7 @@ void Scene_Level::loadLevel() {
       e.addComponent<CAnimation>(game->getAssets().getAnimation((animationName)aName));
       e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize());
       e.addComponent<CTransform>(getPosition(rX, rY, x, y, e), Vec2(0, 0), 0);
-      e.addComponent<CHP>(HP);
+      e.addComponent<CHP>(HP + bonusHp);
       e.addComponent<CDamage>(Dmg);
       if (mb) {
         CPatrolAI& pai = e.addComponent<CPatrolAI>(speed);
@@ -204,7 +205,7 @@ void Scene_Level::spawnSword(Entity e) {
   }
   sword.addComponent<CTransform>(e.getComponent<CTransform>().pos + posShift, Vec2(0, 0), 0);
   sword.addComponent<CLifespan>(SWORD_CD);
-  sword.addComponent<CDamage>(1);
+  sword.addComponent<CDamage>((game->difficulty == DIFFEASY) ? 2 : 1);
 
   sword.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
 }

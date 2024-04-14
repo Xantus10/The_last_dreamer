@@ -8,7 +8,8 @@ class Scene_Menu : public Scene {
   std::vector<sf::Text> menuTexts;
   int menuIndex = 0;
   sf::Text helpText;
-  bool inSettings = false;
+  // 0 = Main menu, 1 = settings, 2 = newGame
+  int positionInSettings = 0;
 
   void initInventory();
   void readGameSave();
@@ -16,6 +17,7 @@ class Scene_Menu : public Scene {
 
   void menuTextsInit();
   void settingsTextsInit();
+  void newGameTextsInit();
 
   void sDoAction(const Action& action);
 public:

@@ -6,6 +6,12 @@
 #define WINDOW_WIDTH 1600
 #define DEFAULT_BLOCK_SIZE 64
 
+enum Difficulty {
+  DIFFEASY,
+  DIFFNORMAL,
+  DIFFHARD
+};
+
 struct Settings { float musicVolume, soundVolume; };
 
 // Just a class to handle circullar dependance
@@ -16,4 +22,5 @@ public:
   virtual void quit() = 0;
   virtual void updateSettings() = 0;
   Settings settings = { 10, 10 };
+  Difficulty difficulty;
 };

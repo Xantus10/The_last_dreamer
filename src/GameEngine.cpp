@@ -140,6 +140,7 @@ void GameEngine::saveGameState(std::string path) {
   }
 
   saveFile << inv->getBootsSpd() << "\n";
+  saveFile << difficulty << "\n";
   saveFile.close();
 }
 

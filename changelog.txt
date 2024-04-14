@@ -27,3 +27,8 @@ Bugfixes
 Alpha 0.6
 Added Saving functionality (autosave every level and return using Continue option in menu)
 Added music for Night leak sequences
+
+Alpha 0.7
+Added boots
+Added volume settings
+Added difficulty settings
