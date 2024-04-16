@@ -4,6 +4,7 @@
 #include "Assets.h"
 #include "GameEnginePointer.h"
 #include "Inventory.h"
+#include "Physics.h"
 
 
 //levelName - name (len<=5), path to level,  leveltypes - M for menu, L for levels, D for dialogues, N for night levels

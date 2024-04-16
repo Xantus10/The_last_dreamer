@@ -1,31 +1,66 @@
-#include "Scene_Night.h"
+#include "Scene_Boss.h"
 #include <fstream>
 #include <iostream>
 
-Scene_Night::Scene_Night(GameEnginePointer* aGame, const std::string aLevelPath)
+#define SWORD_CD 12
+
+Scene_Boss::Scene_Boss(GameEnginePointer* aGame, const std::string aLevelPath)
   : Scene(aGame, aLevelPath, 'L') {
 }
 
 // Register actions and call loadLevel()
-void Scene_Night::init() {
-  game->getAssets().getMusic(MUSICDREAM).setLoop(true);
+void Scene_Boss::init() {
+  /*
+  game->getAssets().getMusic(MUSICDREAM).setLoop(true);            AFTER CREATING BOSS MUSIC
   game->getAssets().getMusic(MUSICDREAM).play();
+  */
   registerAction(sf::Keyboard::W, ACTJUMP);
   registerAction(sf::Keyboard::A, ACTLEFT);
   registerAction(sf::Keyboard::D, ACTRIGHT);
+  registerAction(sf::Keyboard::Space, ACTATTACK);
   registerAction(sf::Keyboard::P, ACTPAUSE);
   loadLevel();
 }
 
-Vec2 Scene_Night::gridCoordToXY(float gridX, float gridY,Entity e) {
+void Scene_Boss::loadAssets() {
+  /* load into bossAssets, make new ANIMBOSS in assets and animation */
+}
+
+Vec2 Scene_Boss::gridCoordToXY(float gridX, float gridY, Entity e) {
   // Size to get half size
   Vec2& size = e.getComponent<CAABB>().halfSize;
   // X = multiply by 64 and add half size | Y is reversed (0,0 is in bottom left)
-  Vec2 retVec((gridX * DEFAULT_BLOCK_SIZE) + size.x + (DEFAULT_BLOCK_SIZE/2 - size.x), (WINDOW_HEIGHT - (gridY * DEFAULT_BLOCK_SIZE)) - size.y + (DEFAULT_BLOCK_SIZE/2 - size.y));
+  Vec2 retVec((gridX * DEFAULT_BLOCK_SIZE) + size.x + (DEFAULT_BLOCK_SIZE / 2 - size.x), (WINDOW_HEIGHT - (gridY * DEFAULT_BLOCK_SIZE)) - size.y + (DEFAULT_BLOCK_SIZE / 2 - size.y));
   return retVec;
 }
 
-void Scene_Night::loadLevel() {
+void Scene_Boss::spawnSword(Entity e) {
+  Entity sword = entities.addEntity(ESWORD);
+
+  char playerDir = velocityToDirAD(e.getComponent<CTransform>().velocity);
+
+  sword.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMSWORD));
+  sword.addComponent<CAABB>(sword.getComponent<CAnimation>().animation.getSize());
+  Vec2 posShift;
+  float rot = 0;
+  switch (playerDir) {
+  case 'a':
+    posShift = Vec2(-44, 0);
+    rot = 270;
+    break;
+  case 'd':
+    posShift = Vec2(44, 0);
+    rot = 90;
+    break;
+  }
+  sword.addComponent<CTransform>(e.getComponent<CTransform>().pos + posShift, Vec2(0, 0), 0);
+  sword.addComponent<CLifespan>(SWORD_CD);
+  sword.addComponent<CDamage>((game->difficulty == DIFFEASY) ? 2 : 1);
+
+  sword.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
+}
+
+void Scene_Boss::loadLevel() {
   // Reload EntityManager
   entities = EntityManager();
   nightmare = false;
@@ -37,7 +72,7 @@ void Scene_Night::loadLevel() {
   float speed;
   while (levelFile >> id) {
     switch (id) {
-    // Player
+      // Player
     case 'P':
     {
       // We check if the player wasnt freed already (resolves problems when reloading)
@@ -52,7 +87,7 @@ void Scene_Night::loadLevel() {
       player.addComponent<CTransform>(gridCoordToXY(playerConfig.spawnX, playerConfig.spawnY, player), Vec2(0, 0), playerConfig.speed);
       player.addComponent<CInput>();
       view = game->getWindow().getDefaultView();
-      view.setCenter(player.getComponent<CTransform>().pos.x, player.getComponent<CTransform>().pos.y-WINDOW_HEIGHT/3);
+      view.setCenter(player.getComponent<CTransform>().pos.x, player.getComponent<CTransform>().pos.y - WINDOW_HEIGHT / 3);
       game->getWindow().setView(view);
       break;
     }
@@ -60,20 +95,7 @@ void Scene_Night::loadLevel() {
     case 'E':
     {
       Entity e = entities.addEntity(EENEMY);
-      levelFile >> x >> y;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTWHEEL));
-      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
-      e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
-      e.removeComponent<CAABB>();
-      break;
-    }
-    case 'C':
-    {
-      Entity e = entities.addEntity(EITEM);
-      levelFile >> x >> y;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTCOIN));
-      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
-      e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
+      
       break;
     }
     case 'B':
@@ -85,56 +107,13 @@ void Scene_Night::loadLevel() {
       e.addComponent<CTransform>(gridCoordToXY(x, y, e), Vec2(0, 0), 0);
       break;
     }
-    case 'M':
-    { // Moving tiles
-      Entity e = entities.addEntity(ETILE);
-      levelFile >> x >> y >> x2 >> y2 >> speed;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTPLATFORM));
-      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
-      Vec2 fpos = gridCoordToXY(x, y, e);
-      Vec2 spos = gridCoordToXY(x2, y2, e);
-      e.addComponent<CTransform>(fpos, Vec2(0, 0), 0);
-      e.addComponent<CPatrolAI>(speed);
-      e.getComponent<CPatrolAI>().patrolPositions.push_back(fpos);
-      e.getComponent<CPatrolAI>().patrolPositions.push_back(spos);
-      break;
-    }
-    case 'N':
-    { // Moving wheels
-      Entity e = entities.addEntity(ESWORD);
-      levelFile >> x >> y >> x2 >> y2 >> speed;
-      e.addComponent<CAnimation>(game->getAssets().getAnimation(ANIMNIGHTWHEEL));
-      e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
-      Vec2 fpos = gridCoordToXY(x, y, e);
-      Vec2 spos = gridCoordToXY(x2, y2, e);
-      e.addComponent<CTransform>(fpos, Vec2(0, 0), 0);
-      e.addComponent<CPatrolAI>(speed);
-      e.getComponent<CPatrolAI>().patrolPositions.push_back(fpos);
-      e.getComponent<CPatrolAI>().patrolPositions.push_back(spos);
-      e.removeComponent<CAABB>();
-      break;
-    }
     }
   }
   levelFile.close();
   entities.update();
 }
 
-// Use when swapping to nightmare
-void Scene_Night::triggerNightmare() {
-  nightmare = true;
-  for (auto e : entities.getEntities(EENEMY)) {
-    e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
-  }
-  for (auto e : entities.getEntities(ESWORD)) {
-    e.addComponent<CAABB>(e.getComponent<CAnimation>().animation.getSize(), true, true);
-  }
-  game->getAssets().getMusic(MUSICDREAM).stop();
-  game->getAssets().getMusic(MUSICNIGHTMARE).setLoop(true);
-  game->getAssets().getMusic(MUSICNIGHTMARE).play();
-}
-
-void Scene_Night::sAnimation() {
+void Scene_Boss::sAnimation() {
   for (auto e : entities.getEntities()) {
     // If entity has animation
     if (e.hasComponent<CAnimation>()) {
@@ -154,14 +133,7 @@ void Scene_Night::sAnimation() {
   }
 }
 
-char velocityToDirAD(Vec2& vel) {
-  if (vel.x >= 0) {
-    return 'd';
-  }
-  return 'a';
-}
-
-void Scene_Night::sMovement() {
+void Scene_Boss::sMovement() {
   auto& playerTransform = player.getComponent<CTransform>();
   auto& playerInput = player.getComponent<CInput>();
   auto& playerAnimation = player.getComponent<CAnimation>();
@@ -172,17 +144,20 @@ void Scene_Night::sMovement() {
   if (playerInput.left != playerInput.right) {
     if (playerInput.airborne) {
       playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROJUMP);
-    } else if (playerAnimation.animation.getName() == ANIMHEROSIDE) {
+    }
+    else if (playerAnimation.animation.getName() == ANIMHEROSIDE) {
       playerAnimation.animation = game->getAssets().getAnimation(ANIMHEROSIDERUN);
     }
     if (playerInput.left) {
       playerTransform.velocity.x = -playerConfig.speed;
       playerAnimation.animation.getSprite().setScale(-1, 1);
-    } else {
+    }
+    else {
       playerTransform.velocity.x = playerConfig.speed;
       playerAnimation.animation.getSprite().setScale(1, 1);
     }
-  } else {
+  }
+  else {
     switch (velocityToDirAD(playerTransform.velocity)) {
     case 'a':
       if (!playerInput.left) {
@@ -201,7 +176,8 @@ void Scene_Night::sMovement() {
   if (playerInput.up && !playerInput.airborne) {
     playerInput.airborne = true;
     playerTransform.velocity.y -= playerConfig.jumpSpeed;
-  } else if (!playerInput.up && playerInput.airborne && playerTransform.velocity.y < 0) {
+  }
+  else if (!playerInput.up && playerInput.airborne && playerTransform.velocity.y < 0) {
     playerTransform.velocity.y = 0;
   }
   playerTransform.velocity.y += playerConfig.gravity;
@@ -214,34 +190,33 @@ void Scene_Night::sMovement() {
   // Finally update position
   playerTransform.pos += playerTransform.velocity;
   
-  // Moving tiles
-  for (auto t : entities.getEntities(ETILE)) {
-    CPatrolAI& pai = t.getComponent<CPatrolAI>();
-    CTransform& trans = t.getComponent<CTransform>();
-    trans.velocity = pai.nextPosition() - trans.pos;
-    trans.velocity.normalize();
-    trans.velocity *= pai.speed;
-    trans.previousPos = trans.pos;
-    trans.pos += trans.velocity;
-  }
-  // Moving wheels
-  for (auto t : entities.getEntities(ESWORD)) {
-    if (!t.hasComponent<CInvincibility>()) {
-      CPatrolAI& pai = t.getComponent<CPatrolAI>();
-      CTransform& trans = t.getComponent<CTransform>();
-      trans.velocity = pai.nextPosition() - trans.pos;
-      trans.velocity.normalize();
-      trans.velocity *= pai.speed;
-      trans.previousPos = trans.pos;
-      trans.pos += trans.velocity;
+  // Update position of sword
+  for (auto e : entities.getEntities(ESWORD)) {
+    char playerDir = velocityToDirAD(e.getComponent<CTransform>().velocity);
+    
+    Vec2 posShift;
+    float rot = 0;
+    switch (playerDir) {
+    case 'a':
+      posShift = Vec2(-44, 0);
+      rot = 270;
+      break;
+    case 'd':
+      posShift = Vec2(44, 0);
+      rot = 90;
+      break;
     }
+
+    auto& eTransform = e.getComponent<CTransform>();
+    eTransform.previousPos = eTransform.pos;
+    eTransform.pos = playerTransform.pos + posShift;
+    e.getComponent<CAnimation>().animation.getSprite().setRotation(rot);
   }
 }
 
 
-void Scene_Night::sInvincibility() {
-  // Just for ESWORD, bcs nothing else has it
-  for (auto e : entities.getEntities(ESWORD)) {
+void Scene_Boss::sInvincibility() {
+  for (auto e : entities.getEntities()) {
     if (e.hasComponent<CInvincibility>()) {
       e.getComponent<CInvincibility>().iframes--;
       if (e.getComponent<CInvincibility>().iframes == 0) {
@@ -252,10 +227,10 @@ void Scene_Night::sInvincibility() {
 }
 
 
-void Scene_Night::sCollision() {
+void Scene_Boss::sCollision() { // REWORK ///////////////////////////////////////////////////
   Vec2 overlap;
   bool died = false;
-  
+
   for (auto e : entities.getEntities(EENEMY)) {
     // Player + enemy
     overlap = getOverlap(e, player);
@@ -264,7 +239,7 @@ void Scene_Night::sCollision() {
       died = true;
     }
   }
-  
+
   // Moving enemies
   for (auto e : entities.getEntities(ESWORD)) {
     // Player + enemy
@@ -287,8 +262,8 @@ void Scene_Night::sCollision() {
       // If it collides with coin, then we destroy the coin
       i.destroy();
       if (!nightmare) {
-        triggerNightmare();
-      } else {
+      }
+      else {
         game->getAssets().getSound(SOUNDPICKUP).play();
       }
     }
@@ -391,15 +366,8 @@ void Scene_Night::sCollision() {
   }
 }
 
-void Scene_Night::sCoins() {
-  if (entities.getEntities(EITEM).size() == 0) {
-    hasEnded = true;
-    entities.freeAllEntities();
-    game->getAssets().getMusic(MUSICNIGHTMARE).stop();
-  }
-}
 
-void Scene_Night::sSetView() {
+void Scene_Boss::sSetView() {
   CTransform& playerTransform = player.getComponent<CTransform>();
   auto& tmp = view.getCenter();
   Vec2 viewPos(tmp.x, tmp.y);
@@ -411,7 +379,8 @@ void Scene_Night::sSetView() {
   game->getWindow().setView(view);
 }
 
-void Scene_Night::sRender() {
+
+void Scene_Boss::sRender() {
   auto& window = game->getWindow();
   window.clear(sf::Color(3, 3, 35));
   for (auto e : entities.getEntities(EBLOCK)) {
@@ -455,64 +424,67 @@ void Scene_Night::sRender() {
   window.display();
 }
 
-void Scene_Night::sDoAction(const Action& action) {
+void Scene_Boss::sDoAction(const Action& action) {
   if (action.getActionType() == ACTSTART) {
     switch (action.getActionName()) {
-      case ACTJUMP:
-        if (!player.getComponent<CInput>().airborne) {
-          player.getComponent<CInput>().up = true;
-        }
-        break;
-      case ACTLEFT:
-        player.getComponent<CInput>().left = true;
-        break;
-      case ACTRIGHT:
-        player.getComponent<CInput>().right = true;
-        break;
-      case ACTPAUSE:
-        paused = !paused;
-        break;
+    case ACTJUMP:
+      if (!player.getComponent<CInput>().airborne) {
+        player.getComponent<CInput>().up = true;
+      }
+      break;
+    case ACTLEFT:
+      player.getComponent<CInput>().left = true;
+      break;
+    case ACTRIGHT:
+      player.getComponent<CInput>().right = true;
+      break;
+    case ACTPAUSE:
+      paused = !paused;
+      break;
     }
-  } else {
+  }
+  else {
     auto& anim = player.getComponent<CAnimation>();
     switch (action.getActionName()) {
-      case ACTJUMP:
-        player.getComponent<CInput>().up = false;
-        break;
-      case ACTLEFT:
-        player.getComponent<CInput>().left = false;
-        if (anim.animation.getName() == ANIMHEROSIDERUN) {
-          auto scale = anim.animation.getSprite().getScale();
-          if (scale.x == -1) {
-            anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
-            anim.animation.getSprite().setScale(scale);
-          }
+    case ACTJUMP:
+      player.getComponent<CInput>().up = false;
+      break;
+    case ACTLEFT:
+      player.getComponent<CInput>().left = false;
+      if (anim.animation.getName() == ANIMHEROSIDERUN) {
+        auto scale = anim.animation.getSprite().getScale();
+        if (scale.x == -1) {
+          anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+          anim.animation.getSprite().setScale(scale);
         }
-        break;
-      case ACTRIGHT:
-        player.getComponent<CInput>().right = false;
-        if (anim.animation.getName() == ANIMHEROSIDERUN) {
-          auto scale = anim.animation.getSprite().getScale();
-          if (scale.x == 1) {
-            anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
-            anim.animation.getSprite().setScale(scale);
-          }
+      }
+      break;
+    case ACTRIGHT:
+      player.getComponent<CInput>().right = false;
+      if (anim.animation.getName() == ANIMHEROSIDERUN) {
+        auto scale = anim.animation.getSprite().getScale();
+        if (scale.x == 1) {
+          anim.animation = game->getAssets().getAnimation(ANIMHEROSIDE);
+          anim.animation.getSprite().setScale(scale);
         }
-        break;
+      }
+      break;
     }
   }
 }
 
-void Scene_Night::update() {
+void Scene_Boss::update() {
   entities.update(); // First of all update the entities (remove and add)
-  if (!paused) {
-    sMovement(); // Call movement first
-    sCollision(); // After movement call collisions to resolve any overlaps
-    sSetView(); // After position has been resolved make the camera close in on player
-    sAnimation(); // Then call animations (Because of player airborne animation)
-    sCoins(); // Check for end through collecting all coins
-    sInvincibility(); // Update CInvincibility for ESWORD
+  // We wait at the beginning
+  if (currentFrame > 300) {
+    if (!paused) {
+      sMovement(); // Call movement first
+      sCollision(); // After movement call collisions to resolve any overlaps
+      sSetView(); // After position has been resolved make the camera close in on player
+      sInvincibility(); // Update CInvincibility
+    }
   }
+  sAnimation(); // Then call animations (Because of player airborne animation)
   sRender(); // After everything render
   currentFrame++;
 }

@@ -78,7 +78,7 @@ public:
 //Input component for user interaction and states
 class CInput : public Component {
 public:
-  bool left=false, right=false, up=false, down=false, attack=false;
+  bool left=false, right=false, up=false, down=false, attack=false, airborne=false;
   CInput() {}
 };
 
